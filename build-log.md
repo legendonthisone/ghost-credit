@@ -23,3 +23,23 @@ Credits used today
 
 Next
 - Specs phase (alert parser, screenshot reader, pattern network hook), after approval.
+
+## Day 1, Thu 19 Nov 2026
+
+What I did
+- Specced and built the alert parser: spec done (requirements in EARS format, design, 8 tasks) and parse_sms_alert built in src/ghost_credit/parser.py.
+- 17 tests passing: 5 example tests, 11 property tests and 1 date fix test.
+- Made three fixes after the first build: time-less dates no longer raise DATE_ODD, curly quotes are normalised before pressure phrases are matched, and KNOWN_BANKS is now a real Nigerian bank list.
+- Wrote specs for screenshot-reader, pattern-network-hook and verdict-engine. No code for these yet.
+- Added the pattern network contract in docs/pattern-network-contract.md.
+
+Kiro features used today
+- Specs: requirements, design and task list for four features.
+- Property-based tests with Hypothesis, tied to the correctness properties in the design.
+- Steering docs: payments-nigeria.md set the red flags and verdict rules the specs follow.
+
+Credits used today
+- 
+
+Next
+- Run the tasks for screenshot-reader, pattern-network-hook and verdict-engine, after approval.
