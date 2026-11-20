@@ -30,7 +30,9 @@ def test_reference_request(tail, amount, reference):
     assert len(fake.calls) == 1
     url, headers, timeout = fake.calls[0]
     assert url == "https://api.paystack.co/transaction/verify/" + urllib.parse.quote(reference, safe="")
-    assert headers == {"Authorization": "Bearer " + key}
+    assert headers == {"Authorization": "Bearer " + key,
+                       "User-Agent": "ghost-credit/0.1",
+                       "Accept": "application/json"}
     assert timeout == 5
 
 
@@ -49,5 +51,7 @@ def test_search_request(tail, amount, reference, alert_time):
     expected_query = urllib.parse.urlencode({
         "status": "success", "from": _iso(start), "to": _iso(end), "perPage": 100})
     assert url == "https://api.paystack.co/transaction?" + expected_query
-    assert headers == {"Authorization": "Bearer " + key}
+    assert headers == {"Authorization": "Bearer " + key,
+                       "User-Agent": "ghost-credit/0.1",
+                       "Accept": "application/json"}
     assert timeout == 5

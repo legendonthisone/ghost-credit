@@ -69,7 +69,7 @@ def verify(parsed: ParsedAlert, secret_key: str | None, now: datetime,
 
 | Function | Job |
 |---|---|
-| `default_http(url, headers, timeout_seconds)` | One `urllib.request` GET. Returns `(status, body)`. An `HTTPError` returns its code and body. Other errors propagate. |
+| `default_http(url, headers, timeout_seconds)` | One `urllib.request` GET. Returns `(status, body)`. An `HTTPError` returns its code and body. Other errors propagate. Adds no header of its own. |
 | `_key_problem(secret_key)` | Returns a fixed `UNAVAILABLE` result, or None for a Test_Key. Test_Key means a `str` starting with `"sk_" + "test_"` (built from two pieces). |
 | `_is_int_amount(value)` | True for an `int` that is not a `bool`. |
 | `_usable_reference(value)` | Returns the reference when it is a `str` with a non-whitespace character, else None. |
@@ -85,6 +85,18 @@ def verify(parsed: ParsedAlert, secret_key: str | None, now: datetime,
 | `_decide_by_reference(data, parsed_reference, amount)` | Builds the result for a verify response. |
 | `_decide_by_search(data, amount)` | Builds the result for a list response (zero, one, many, full page). |
 | `_result(...)` constructors | `_unavailable(reason)`, `_not_found(reason, checked)`, `_confirmed(...)`. They keep the detail fields None for non-confirmed results. |
+
+### Request headers
+
+Every request, on both the verify and the list path, carries exactly three headers. One shared helper, `_auth_headers(secret_key)`, builds them, and both request builders use it:
+
+| Header | Value |
+|---|---|
+| `Authorization` | `Bearer <Secret_Key>` (unchanged) |
+| `User-Agent` | `ghost-credit/0.1` (constant `USER_AGENT`) |
+| `Accept` | `application/json` (constant `ACCEPT`) |
+
+Reason: Paystack sits behind Cloudflare, which blocks the default Python-urllib User-Agent with a 403 and the body "error code: 1010". Without a custom `User-Agent`, every real call would fail. `default_http` adds no header of its own. It sends the headers it is given and nothing else. The key still appears only in the `Authorization` value, never in the URL, `User-Agent`, `Accept` or any reason.
 
 ### Fixed reasons
 
@@ -155,7 +167,7 @@ Reflection: the key-handling criteria 2.1 and 2.2 merge into one property. The r
 
 ### Property 5: The key never leaks
 
-*For any* Fake_Key and any fake response, the key text appears in no returned PaystackResult (its `repr`) and in no captured log output, and in the recorded request it appears only as `Authorization: Bearer <key>`, not in the URL.
+*For any* Fake_Key and any fake response, the key text appears in no returned PaystackResult (its `repr`) and in no captured log output, and in the recorded request it appears only inside the `Authorization: Bearer <key>` header value, not in the URL and not in the `User-Agent` or `Accept` headers (the request carries these three headers, so `Authorization` is not the only header sent).
 
 **Validates: Requirements 2.4, 2.5, 4.2, 8.9**
 
@@ -167,7 +179,7 @@ Reflection: the key-handling criteria 2.1 and 2.2 merge into one property. The r
 
 ### Property 7: Request building
 
-*For any* Test_Key, int amount and reference string, `verify` makes exactly one Http_Function call with a 5-second timeout and an `Authorization` header equal to `Bearer <key>`. When the reference has a non-whitespace character, the URL is the Verify_Endpoint with the reference encoded by `quote(reference, safe="")`. Otherwise the URL is the List_Endpoint with `status=success`, `perPage=100`, and `from` and `to` as given by property 8.
+*For any* Test_Key, int amount and reference string, `verify` makes exactly one Http_Function call with a 5-second timeout and exactly three headers: `Authorization` equal to `Bearer <key>`, `User-Agent` equal to `ghost-credit/0.1` and `Accept` equal to `application/json`. When the reference has a non-whitespace character, the URL is the Verify_Endpoint with the reference encoded by `quote(reference, safe="")`. Otherwise the URL is the List_Endpoint with `status=success`, `perPage=100`, and `from` and `to` as given by property 8.
 
 **Validates: Requirements 4.1, 4.2, 4.7, 5.1, 6.5**
 

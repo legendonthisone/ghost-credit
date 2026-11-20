@@ -33,4 +33,8 @@ def test_key_only_in_authorization_header(caplog, tail, ref, body, status, raise
     assert key not in caplog.text
     url, headers, _ = fake.calls[0]
     assert key not in url
-    assert headers == {"Authorization": "Bearer " + key}
+    assert set(headers) == {"Authorization", "User-Agent", "Accept"}
+    assert headers["Authorization"] == "Bearer " + key
+    for name, value in headers.items():
+        if name != "Authorization":
+            assert key not in value

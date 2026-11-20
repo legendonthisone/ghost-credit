@@ -47,6 +47,8 @@ VERIFY_URL = "https://api.paystack.co/transaction/verify/"
 LIST_URL = "https://api.paystack.co/transaction"
 TIMEOUT_SECONDS = 5.0
 PER_PAGE = 100
+USER_AGENT = "ghost-credit/0.1"
+ACCEPT = "application/json"
 
 # Lagos is a fixed +01:00 all year (no daylight saving).
 _LAGOS = timezone(timedelta(hours=1))
@@ -129,8 +131,16 @@ def _iso(dt: datetime) -> str:
 
 
 def _auth_headers(secret_key: str) -> dict[str, str]:
-    """Return the request headers. The key goes here and nowhere else."""
-    return {"Authorization": "Bearer " + secret_key}
+    """Return the request headers. The key goes in Authorization and nowhere else.
+
+    User-Agent and Accept are always sent because Paystack's Cloudflare
+    front blocks the default Python-urllib User-Agent.
+    """
+    return {
+        "Authorization": "Bearer " + secret_key,
+        "User-Agent": USER_AGENT,
+        "Accept": ACCEPT,
+    }
 
 
 def _verify_request(reference: str, secret_key: str) -> tuple[str, dict[str, str]]:
@@ -155,6 +165,7 @@ def default_http(url: str, headers: dict[str, str],
                  timeout_seconds: float) -> tuple[int, bytes]:
     """Do one GET with urllib and return (status, body).
 
+    Sends exactly the headers it is given and adds none (no User-Agent).
     An HTTP error such as 401 or 404 returns its code and body so the caller
     can decide. Other errors (timeout, no network) are raised.
     """

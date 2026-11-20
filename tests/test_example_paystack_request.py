@@ -16,7 +16,8 @@ def test_reference_request_url_and_header() -> None:
     verify(make_parsed(claimed_reference="GC/ref 1"), key, NOW, http=fake)
     assert fake.calls == [(
         "https://api.paystack.co/transaction/verify/GC%2Fref%201",
-        {"Authorization": "Bearer " + key},
+        {"Authorization": "Bearer " + key, "User-Agent": "ghost-credit/0.1",
+         "Accept": "application/json"},
         5.0,
     )]
 
@@ -30,9 +31,21 @@ def test_search_request_url_and_header() -> None:
         "https://api.paystack.co/transaction?status=success"
         "&from=2026-11-20T09%3A32%3A11%2B01%3A00"
         "&to=2026-11-20T10%3A07%3A11%2B01%3A00&perPage=100",
-        {"Authorization": "Bearer " + key},
+        {"Authorization": "Bearer " + key, "User-Agent": "ghost-credit/0.1",
+         "Accept": "application/json"},
         5.0,
     )]
+
+
+def test_user_agent_and_accept_values_do_not_contain_key() -> None:
+    fake = RecordingHttp()
+    key = fake_key("abc123")
+    verify(make_parsed(claimed_reference="GC-1"), key, NOW, http=fake)
+    headers = fake.calls[0][1]
+    assert headers["User-Agent"] == "ghost-credit/0.1"
+    assert headers["Accept"] == "application/json"
+    assert key not in headers["User-Agent"]
+    assert key not in headers["Accept"]
 
 
 def test_search_without_alert_time_uses_last_hour_from_now() -> None:
