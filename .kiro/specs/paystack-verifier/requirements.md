@@ -12,11 +12,11 @@ Decisions made where the brief was silent (conservative choices):
 - The reference is URL-encoded with `urllib.parse.quote(reference, safe="")`.
 - The time window is sent as the `from` and `to` query parameters in ISO 8601 with the Lagos offset, plus `perPage=100`.
 - A naive datetime is treated as Lagos time (`+01:00`). A timezone-aware datetime is converted to `+01:00`.
-- `checked` is True only when Paystack was reached and answered with HTTP 200 and readable JSON. It is False whenever no Paystack call was made, including the NOT_FOUND result for an unreadable amount.
+- `checked` is True only when Paystack was reached and either answered with HTTP 200 and readable JSON, or, on the reference path only, answered with a clear "transaction not found" answer (HTTP 400 or 404). It is False whenever no Paystack call was made, including the NOT_FOUND result for an unreadable amount.
 - Malformed JSON, or JSON of the wrong shape, from Paystack gives UNAVAILABLE.
 - A response is untrusted data. Only the fields named in this document are read, and each is type-checked.
 - A full page of 100 transactions with no single clear match is NOT_FOUND with a "check manually" reason, because a second page could hold another payment of the same amount.
-- An HTTP 404 from the verify endpoint (unknown reference) is a non-200 response, so it gives UNAVAILABLE, as the brief requires.
+- An unknown reference on the verify endpoint is NOT_FOUND with `checked` True, but only when Paystack answers HTTP 400 or 404 with a JSON object whose `status` is the JSON boolean false and whose `code` is `"transaction_not_found"` or whose `message` is a string containing "not found" (case-insensitive). Every other non-200 answer, including a 400 or 404 with unreadable JSON, a non-object body, a `status` that is not exactly false, or a different message, stays UNAVAILABLE. The search path is unchanged: every non-200 answer there is UNAVAILABLE.
 
 Out of scope: Paystack live keys, webhooks, writing to Paystack, retries, caching, the verdict mapping, reply wording, and any AI model.
 
@@ -27,7 +27,8 @@ Out of scope: Paystack live keys, webhooks, writing to Paystack, retries, cachin
 - **ParsedAlert**: The dataclass from `alert-parser`. Its `amount_kobo` is an int or None, its `claimed_reference` is a string or None, and its `alert_time` is a naive datetime or None.
 - **PaystackResult**: A frozen dataclass with the fields `status`, `checked`, `matched_reference`, `amount_kobo`, `paid_at` and `reason`. It is the Paystack-facing result and is distinct from the verdict-engine's PaystackResult.
 - **Status**: One of the three strings `CONFIRMED`, `NOT_FOUND` or `UNAVAILABLE`.
-- **Checked**: The boolean `checked` field. It is True only when Paystack answered with HTTP 200 and readable JSON.
+- **Checked**: The boolean `checked` field. It is True only when Paystack answered with HTTP 200 and readable JSON, or, on the reference path, answered with a Reference_Not_Found_Answer.
+- **Reference_Not_Found_Answer**: An answer from the Verify_Endpoint with HTTP status 400 or 404 and a JSON object body whose `status` is the JSON boolean false and whose `code` equals `"transaction_not_found"` or whose `message` is a string containing "not found" in any letter case.
 - **Reason**: A short plain-English string in the `reason` field. It never contains the secret key.
 - **Secret_Key**: The Paystack secret key string passed to Verify_Function, or None.
 - **Test_Key**: A Secret_Key that starts with the test-mode prefix, which is the letters `sk`, an underscore, the word `test` and an underscore.
@@ -116,11 +117,12 @@ Out of scope: Paystack live keys, webhooks, writing to Paystack, retries, cachin
 #### Acceptance Criteria
 
 1. IF the Http_Function raises any exception, including a timeout or network error, THEN THE Verify_Function SHALL return `UNAVAILABLE` with `checked` False and the reason `"could not reach Paystack"`.
-2. IF the Http_Function returns an HTTP status code other than 200, THEN THE Verify_Function SHALL return `UNAVAILABLE` with `checked` False and the reason `"Paystack did not answer normally"`.
+2. IF the Http_Function returns an HTTP status code other than 200 and the answer is not a Reference_Not_Found_Answer on the Verify_Endpoint, THEN THE Verify_Function SHALL return `UNAVAILABLE` with `checked` False and the reason `"Paystack did not answer normally"`.
 3. IF the body returned with HTTP 200 is not valid JSON, is not a JSON object, or lacks the expected `data` field of the right type, THEN THE Verify_Function SHALL return `UNAVAILABLE` with `checked` False and the reason `"Paystack reply could not be read"`.
 4. THE default Http_Function SHALL use only the Python standard library (`urllib.request`) and SHALL pass the 5-second timeout to the request.
 5. THE Verify_Function SHALL make at most one Http_Function call per invocation and SHALL perform no retry.
 6. THE Verify_Function SHALL return a PaystackResult for every input and SHALL raise no exception, including when `parsed` is not a ParsedAlert, when `now` is not a datetime, and when the Http_Function raises or returns a value of the wrong shape.
+7. WHEN the Verify_Endpoint answers with a Reference_Not_Found_Answer, THE Verify_Function SHALL return `NOT_FOUND` with `checked` True, `matched_reference`, `amount_kobo` and `paid_at` as None, and the reason `"Paystack has no payment with this reference"`.
 
 ### Requirement 7: Read the response safely
 

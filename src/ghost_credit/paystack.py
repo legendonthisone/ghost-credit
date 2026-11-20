@@ -38,6 +38,7 @@ REASON_NO_MATCH = "Paystack has no matching payment"
 REASON_MANY = "more than one payment of this amount, check manually"
 REASON_MATCH = "Paystack has a matching payment"
 REASON_INTERNAL = "could not check Paystack"
+REASON_NO_SUCH_REFERENCE = "Paystack has no payment with this reference"
 
 # Built from two pieces so the full prefix never appears as one literal.
 _TEST_KEY_PREFIX = "sk_" + "test_"
@@ -201,6 +202,22 @@ def _parse_paid_at(value: object) -> datetime | None:
         return None
 
 
+def _is_reference_not_found(status_code: int, body: object) -> bool:
+    """True when Paystack clearly says it has no payment with this reference.
+
+    Needs HTTP 400 or 404, a JSON object whose ``status`` is exactly false, and
+    either code "transaction_not_found" or a message containing "not found".
+    """
+    if status_code not in (400, 404):
+        return False
+    data = _parse_body(body)
+    if data is None or data.get("status") is not False:
+        return False
+    message = data.get("message")
+    return (data.get("code") == "transaction_not_found"
+            or (isinstance(message, str) and "not found" in message.lower()))
+
+
 def _decide_by_reference(data: dict, claimed_reference: str, amount: int) -> PaystackResult:
     """Decide from a verify reply: CONFIRMED if it matches, else NOT_FOUND (checked)."""
     if not _is_match(data, amount):
@@ -256,6 +273,8 @@ def verify(parsed: ParsedAlert, secret_key: str | None, now: datetime,
             return _unavailable(REASON_UNREACHABLE)
         status_code, body = reply
         if status_code != 200:
+            if reference is not None and _is_reference_not_found(status_code, body):
+                return _not_found(REASON_NO_SUCH_REFERENCE, True)
             return _unavailable(REASON_BAD_STATUS)
         parsed_body = _parse_body(body)
         expected = dict if reference is not None else list

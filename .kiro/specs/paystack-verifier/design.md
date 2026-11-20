@@ -7,7 +7,7 @@ The Paystack_Verifier is one module, `src/ghost_credit/paystack.py`. Its public 
 Design choices:
 - **Pure core, thin I/O edge.** All decisions (key check, amount check, request building, response matching) are small pure functions. The only I/O is one call to an injected `Http_Function`, so tests pass a fake and never touch the network.
 - **Standard library only.** `urllib.request`, `urllib.parse`, `json` and `datetime`. No new dependency.
-- **Fail closed.** Anything unexpected (bad key, bad shape, exception, non-200) gives `UNAVAILABLE` or `NOT_FOUND`. `CONFIRMED` needs every condition in Requirement 7.5 to hold.
+- **Fail closed.** Anything unexpected (bad key, bad shape, exception, non-200) gives `UNAVAILABLE` or `NOT_FOUND`. The one non-200 case that gives `NOT_FOUND` is a clear "transaction not found" answer on the reference path. `CONFIRMED` needs every condition in Requirement 7.5 to hold.
 - **Fixed reasons.** Every `reason` is a constant string. No text from Paystack and no part of the key ever enters a reason.
 - **Reads `ParsedAlert` narrowly.** The module imports `ParsedAlert` from `src/ghost_credit/parser.py` (a frozen dataclass) and reads only three fields: `amount_kobo` (`int | None`), `claimed_reference` (`str | None`, taken from labels such as `Ref`, `Reference` or `Session ID`) and `alert_time` (`datetime | None`, naive, so it is read as Lagos time). Other fields (`red_flags`, `sender_id`, `screenshot_phash` and so on) are ignored. `parsed` is read with `getattr(..., None)`, so a non-`ParsedAlert` object cannot raise.
 
@@ -30,7 +30,9 @@ flowchart TD
     E --> G[call http once]
     F --> G
     G -- raises --> U3[UNAVAILABLE: could not reach Paystack]
-    G -- not 200 --> U4[UNAVAILABLE: did not answer normally]
+    G -- not 200 --> R{reference path and 400 or 404 not-found answer?}
+    R -- yes --> N2[NOT_FOUND checked: no payment with this reference]
+    R -- no --> U4[UNAVAILABLE: did not answer normally]
     G -- 200 --> H{JSON readable and right shape?}
     H -- no --> U5[UNAVAILABLE: reply could not be read]
     H -- yes --> I[match transactions]
@@ -49,7 +51,7 @@ All functions live in `src/ghost_credit/paystack.py`. Each has type hints and a 
 @dataclass(frozen=True)
 class PaystackResult:
     status: str                      # "CONFIRMED" | "NOT_FOUND" | "UNAVAILABLE"
-    checked: bool                    # True only when Paystack answered 200 with readable JSON
+    checked: bool                    # True when Paystack answered 200 with readable JSON, or 400/404 not-found on the reference path
     matched_reference: str | None
     amount_kobo: int | None
     paid_at: datetime | None         # Lagos offset
@@ -77,6 +79,7 @@ def verify(parsed: ParsedAlert, secret_key: str | None, now: datetime,
 | `_verify_request(reference, key)` | Returns `(url, headers)` using `urllib.parse.quote(reference, safe="")`. |
 | `_list_request(window, key)` | Returns `(url, headers)` using `urllib.parse.urlencode` with `status=success`, `from`, `to`, `perPage=100`. |
 | `_parse_body(body)` | Decodes and `json.loads` the bytes. Returns a `dict` or None. |
+| `_is_reference_not_found(status_code, body)` | True only for HTTP 400 or 404 with a JSON object whose `status` is exactly the boolean false and whose `code` equals `"transaction_not_found"` or whose `message` is a string containing "not found" (case-insensitive). Used on the reference path only. |
 | `_is_match(item, amount)` | Matching_Transaction test: dict, `status == "success"`, `currency == "NGN"`, int (not bool) `amount == amount`. |
 | `_parse_paid_at(value)` | Parses ISO 8601 text to a Lagos datetime, or None. |
 | `_decide_by_reference(data, parsed_reference, amount)` | Builds the result for a verify response. |
@@ -91,7 +94,8 @@ def verify(parsed: ParsedAlert, secret_key: str | None, now: datetime,
 | Non-test key | UNAVAILABLE | False | `test keys only during the hackathon` |
 | Unreadable amount | NOT_FOUND | False | `could not read the amount` |
 | Raised | UNAVAILABLE | False | `could not reach Paystack` |
-| Non-200 | UNAVAILABLE | False | `Paystack did not answer normally` |
+| Non-200 (any other than the next row) | UNAVAILABLE | False | `Paystack did not answer normally` |
+| Reference not found (400 or 404, reference path) | NOT_FOUND | True | `Paystack has no payment with this reference` |
 | Bad JSON or shape | UNAVAILABLE | False | `Paystack reply could not be read` |
 | No match | NOT_FOUND | True | `Paystack has no matching payment` |
 | Many or full page | NOT_FOUND | True | `more than one payment of this amount, check manually` |
@@ -116,7 +120,7 @@ Times: the request uses ISO 8601 with `+01:00`, for example `2026-11-20T10:02:11
 
 Decisions:
 - A full page (100 items) holding at least one match is `NOT_FOUND` with the "check manually" reason (5.10).
-- A 404 from the verify endpoint is a non-200 and gives `UNAVAILABLE` (as the requirements say).
+- A 400 or 404 from the verify endpoint gives `NOT_FOUND` with `checked` True only when `_is_reference_not_found` is true. A 400 or 404 with unreadable JSON, a non-object body, a `status` that is not exactly false, or a different message stays `UNAVAILABLE`. On the search path every non-200 gives `UNAVAILABLE`.
 - `bool` is rejected as an amount everywhere, because `True == 1` in Python.
 
 ## Correctness Properties
@@ -187,7 +191,7 @@ Reflection: the key-handling criteria 2.1 and 2.2 merge into one property. The r
 
 ### Property 11: Failures give UNAVAILABLE and are not confirmed
 
-*For any* Test_Key and int amount, when the fake Http_Function raises, or returns a status other than 200, or returns a 200 body that is not a JSON object or lacks a `data` field of the right type, `verify` returns `UNAVAILABLE` with `checked` False and the matching fixed reason.
+*For any* Test_Key and int amount, when the fake Http_Function raises, or returns a status other than 200 that is not a Reference_Not_Found_Answer on the reference path (this includes every non-200 on the search path, and a 400 or 404 on the reference path with unreadable JSON, a non-object body, a `status` that is not exactly false, or a different message), or returns a 200 body that is not a JSON object or lacks a `data` field of the right type, `verify` returns `UNAVAILABLE` with `checked` False and the matching fixed reason.
 
 **Validates: Requirements 6.1, 6.2, 6.3**
 
@@ -207,7 +211,13 @@ Reflection: the key-handling criteria 2.1 and 2.2 merge into one property. The r
 
 *For any* input and fake response containing arbitrary text in any field, the `reason` of the result is one of the fixed strings in the reasons table.
 
-**Validates: Requirements 7.6, 1.5**
+**Validates: Requirements 7.6, 1.5, 6.7**
+
+### Property 15: Reference not found
+
+*For any* Test_Key, int amount and usable reference, when the fake Http_Function returns HTTP 400 or 404 with a JSON object whose `status` is the boolean false and whose `code` equals `"transaction_not_found"` or whose `message` is a string containing "not found" in any letter case, `verify` returns `NOT_FOUND` with `checked` True, `matched_reference`, `amount_kobo` and `paid_at` None, and the reason `Paystack has no payment with this reference`. When the same answer arrives on the search path (no usable reference), `verify` returns `UNAVAILABLE` with `checked` False.
+
+**Validates: Requirements 6.2, 6.7**
 
 ## Error Handling
 
@@ -217,7 +227,9 @@ Reflection: the key-handling criteria 2.1 and 2.2 merge into one property. The r
 | Key not a test key | `UNAVAILABLE`, unchecked, no call |
 | Amount not a plain int | `NOT_FOUND`, unchecked, no call |
 | Http_Function raises (timeout, network, anything) | `UNAVAILABLE`, unchecked |
-| Status other than 200 (including 401, 404, 500) | `UNAVAILABLE`, unchecked |
+| Reference path: HTTP 400 or 404 with a JSON object body, `status` exactly false, and `code` `"transaction_not_found"` or `message` containing "not found" (any case) | `NOT_FOUND`, checked, reason `Paystack has no payment with this reference` |
+| Status other than 200 (including 401, 500, and a 400 or 404 that is not the not-found answer above, such as unreadable JSON, a non-object body, `status` not exactly false or a different message) | `UNAVAILABLE`, unchecked |
+| Search path: any status other than 200 | `UNAVAILABLE`, unchecked |
 | Body not UTF-8 JSON, not an object, or `data` of wrong type | `UNAVAILABLE`, unchecked |
 | Http_Function returns the wrong shape (not a `(int, bytes)` pair) | `UNAVAILABLE`, `could not reach Paystack`, unchecked |
 | `parsed` or `now` of the wrong type | Caught by the outer guard. `UNAVAILABLE`, unchecked |
@@ -248,7 +260,7 @@ Smoke checks: `http=None` selects `default_http`, `default_http` is stdlib-only,
 1. Add `PaystackResult`, the fixed reason constants, the result constructors and the `verify` skeleton with the outer guard. Add the key check and amount check (Properties 4, 6, 1).
 2. Add the time helpers `_to_lagos`, `_search_window` and `_iso` (Property 8).
 3. Add request builders for the verify and list endpoints and the single `http` call with the 5-second timeout, plus `default_http` (Properties 7, 5).
-4. Add body parsing and the failure paths for raise, non-200 and bad JSON (Property 11).
+4. Add body parsing and the failure paths for raise, non-200 and bad JSON, including the reference not-found answer (Properties 11, 15).
 5. Add `_is_match`, `_parse_paid_at` and the reference decision (Properties 9, 12).
 6. Add the search decision with zero, one, many and full-page cases (Property 10).
 7. Add the cross-cutting properties 2, 3, 13 and 14, and the full never-raises test over all fakes.

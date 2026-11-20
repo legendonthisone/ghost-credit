@@ -28,9 +28,41 @@ def test_non_200_server_error():
            "Paystack did not answer normally")
 
 
-def test_404_from_verify_endpoint():
-    body = b'{"status": false, "message": "Transaction reference not found"}'
-    _check(RecordingHttp(status=404, body=body), "Paystack did not answer normally")
+NOT_FOUND_BODY = b'{"status": false, "message": "Transaction reference not found"}'
+
+
+def _check_no_such_reference(fake: RecordingHttp) -> None:
+    result = verify(make_parsed(claimed_reference="GC-1001"), KEY, NOW, http=fake)
+    assert result.status == "NOT_FOUND"
+    assert result.checked is True
+    assert result.matched_reference is None
+    assert result.amount_kobo is None
+    assert result.paid_at is None
+    assert result.reason == "Paystack has no payment with this reference"
+    assert len(fake.calls) == 1
+
+
+def test_404_not_found_gives_not_found():
+    _check_no_such_reference(RecordingHttp(status=404, body=NOT_FOUND_BODY))
+
+
+def test_400_not_found_gives_not_found():
+    _check_no_such_reference(RecordingHttp(status=400, body=NOT_FOUND_BODY))
+
+
+def test_400_other_message_stays_unavailable():
+    body = b'{"status": false, "message": "Invalid key"}'
+    _check(RecordingHttp(status=400, body=body), "Paystack did not answer normally")
+
+
+def test_code_transaction_not_found_with_unrelated_message():
+    body = b'{"status": false, "code": "transaction_not_found", "message": "Nope"}'
+    _check_no_such_reference(RecordingHttp(status=404, body=body))
+
+
+def test_404_on_search_path_stays_unavailable():
+    _check(RecordingHttp(status=404, body=NOT_FOUND_BODY),
+           "Paystack did not answer normally", reference=None)
 
 
 def test_401_bad_key_reply():
