@@ -19,6 +19,7 @@ RED_FLAG_CODES = (
     "AMOUNT_FORMAT_ODD",
     "DATE_ODD",
     "PRESSURE_LANGUAGE",
+    "SCREENSHOT_EDIT_SIGNS",
 )
 
 # Lower-case phrases that urge the shop to release goods at once. Edit here.
@@ -61,6 +62,8 @@ class ParsedAlert:
 
     A field with no value in the input is None. ``red_flags`` is a list of
     unique codes from ``RED_FLAG_CODES``, in that tuple's order.
+    ``screenshot_phash`` is set only by the screenshot reader (``phash:`` plus
+    16 hex characters). SMS parsing always leaves it None.
     """
 
     amount_kobo: int | None = None
@@ -73,6 +76,7 @@ class ParsedAlert:
     available_balance_kobo: int | None = None
     claimed_reference: str | None = None
     red_flags: list[str] = field(default_factory=list)
+    screenshot_phash: str | None = None
 
 
 Span = tuple[int, int]

@@ -1,0 +1,330 @@
+{
+  "pbtResults": {
+    "1.2 Write property test for key handling": {
+      "status": "passed",
+      "lastRunTimestamp": 1795180063110
+    },
+    "1.3 Write property test for unreadable amounts": {
+      "status": "passed",
+      "lastRunTimestamp": 1795180066441
+    },
+    "2.2 Write property test for the search window": {
+      "status": "passed",
+      "lastRunTimestamp": 1795180138949
+    },
+    "3.3 Write property test that the key never leaks": {
+      "status": "passed",
+      "lastRunTimestamp": 1795180395068
+    },
+    "3.2 Write property test for request building": {
+      "status": "passed",
+      "lastRunTimestamp": 1795180421707
+    },
+    "4.2 Write property test for failures": {
+      "status": "passed",
+      "lastRunTimestamp": 1795180604393
+    },
+    "5.3 Write property test for paid_at handling": {
+      "status": "passed",
+      "lastRunTimestamp": 1795180830614
+    },
+    "6.2 Write property test for the search outcome": {
+      "status": "passed",
+      "lastRunTimestamp": 1795180893580
+    }
+  },
+  "executionHistory": {
+    "1. Create the module skeleton, shared test fakes, and the key and amount checks": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795179978735
+      },
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180095220
+      }
+    ],
+    "1.1 Create `src/ghost_credit/paystack.py` with the result type, reasons and key/amount checks": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180095042
+      }
+    ],
+    "1.2 Write property test for key handling": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180095656
+      }
+    ],
+    "1.3 Write property test for unreadable amounts": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180096456
+      }
+    ],
+    "1.4 Write example tests for missing key, non-test key and unreadable amount": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180097074
+      }
+    ],
+    "2. Add the time helpers": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180097665
+      },
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180335050
+      }
+    ],
+    "3. Add the request builders, the single http call and the default http function": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180334463
+      },
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180507778
+      }
+    ],
+    "2.1 Add `_to_lagos`, `_search_window` and `_iso` to `paystack.py`": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180334913
+      }
+    ],
+    "2.2 Write property test for the search window": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180335710
+      }
+    ],
+    "2.3 Write example tests for naive and aware `alert_time`": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180336533
+      }
+    ],
+    "3.1 Add `_verify_request`, `_list_request` and `default_http`, and make `verify` call `http` once": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180507632
+      }
+    ],
+    "3.2 Write property test for request building": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180508323
+      }
+    ],
+    "3.3 Write property test that the key never leaks": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180509263
+      }
+    ],
+    "3.4 Write example test for the exact recorded URL and Authorization header": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180509953
+      }
+    ],
+    "4. Add body parsing and the failure paths": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180510565
+      },
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180740924
+      }
+    ],
+    "4.1 Add `_parse_body` and the failure handling in `verify`": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180740840
+      }
+    ],
+    "4.2 Write property test for failures": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180741445
+      }
+    ],
+    "4.3 Write example tests for timeout, non-200 and malformed JSON": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180742213
+      }
+    ],
+    "5. Add transaction matching and the reference decision": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180742839
+      },
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180848571
+      }
+    ],
+    "5.1 Add `_is_match`, `_parse_paid_at` and `_decide_by_reference`": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180848473
+      }
+    ],
+    "6. Add the search decision": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180849291
+      },
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181330526
+      }
+    ],
+    "5.2 Write property test for a matching reference payment": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180850074
+      }
+    ],
+    "5.3 Write property test for paid_at handling": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180850641
+      }
+    ],
+    "5.4 Write example tests for a confirmed reference check and a non-NGN currency": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795180851437
+      }
+    ],
+    "6.1 Add `_decide_by_search` and wire it into `verify`": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181330459
+      }
+    ],
+    "6.2 Write property test for the search outcome": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181331254
+      }
+    ],
+    "6.3 Write example tests for the search cases": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181332076
+      }
+    ],
+    "7. Add the cross-cutting property tests": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181332645
+      },
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181794817
+      }
+    ],
+    "7.1 Write property test that `verify` never raises": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181794754
+      }
+    ],
+    "7.2 Write property test that a mismatched amount is never confirmed": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181795317
+      }
+    ],
+    "7.3 Write property test that a non-success status is never confirmed": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181796106
+      }
+    ],
+    "7.4 Write property test that CONFIRMED needs every condition": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181796943
+      }
+    ],
+    "7.5 Write property test that reasons are fixed strings": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181797707
+      }
+    ],
+    "8. Add smoke checks and run the whole suite": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181798435
+      },
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181864911
+      }
+    ],
+    "8.1 Write smoke tests for module conventions": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181864653
+      }
+    ],
+    "8.2 Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795181864822
+      }
+    ]
+  }
+}
