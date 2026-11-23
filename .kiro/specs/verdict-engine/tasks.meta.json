@@ -1,0 +1,309 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Create the module skeleton, Paystack mapping and shared test helpers": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795420779870
+      },
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421373302
+      }
+    ],
+    "1.1 Create `src/ghost_credit/verdict.py` with imports, constants and the first helpers": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421372829
+      }
+    ],
+    "1.2 Fix the stale docstring in `src/ghost_credit/paystack.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421373145
+      }
+    ],
+    "1.3 Create shared test helpers in `tests/verdict_helpers.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421373629
+      }
+    ],
+    "1.4 Write example tests for the Paystack mapping in `tests/test_verdict_paystack_mapping_examples.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421373959
+      }
+    ],
+    "2.1 Add the flag sentence table, reason builders, `decide` and the fallback Verdict to `verdict.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421374902
+      }
+    ],
+    "2. Implement `decide` and the reasons": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421375013
+      }
+    ],
+    "2.2 Write example tests for the rules in `tests/test_verdict_rules_examples.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421375695
+      }
+    ],
+    "2.3 Write property test for the rule table in `tests/test_verdict_prop_01_rule_table.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421376477
+      }
+    ],
+    "2.4 Write property test in `tests/test_verdict_prop_02_paystack_beats_network.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421377316
+      }
+    ],
+    "2.5 Write property test in `tests/test_verdict_prop_03_only_paystack_confirms.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421378193
+      }
+    ],
+    "2.6 Write property test in `tests/test_verdict_prop_04_screenshot_never_confirms.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421378866
+      }
+    ],
+    "2.7 Write property test in `tests/test_verdict_prop_05_network_unavailable.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421379453
+      }
+    ],
+    "2.8 Write property test in `tests/test_verdict_prop_06_fixed_fields.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421380333
+      }
+    ],
+    "2.9 Write property test in `tests/test_verdict_prop_07_reason_length.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421381042
+      }
+    ],
+    "2.10 Write property test in `tests/test_verdict_prop_08_reasons_content.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421381845
+      }
+    ],
+    "2.11 Write property test in `tests/test_verdict_prop_09_deterministic.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421382884
+      }
+    ],
+    "2.12 Write property test in `tests/test_verdict_prop_10_total.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421383718
+      }
+    ],
+    "3.1 Add `COLLECTION_TERMS`, `_normalise_text`, the Lagos time helper, `_threshold` and `risk_notes` to `verdict.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421384532
+      }
+    ],
+    "3. Implement the risk notes": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421384678
+      }
+    ],
+    "3.2 Write example tests for each risk note in `tests/test_verdict_risk_notes_examples.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421385319
+      }
+    ],
+    "3.3 Write property test in `tests/test_verdict_prop_12_friday_weekend_note.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421386410
+      }
+    ],
+    "3.4 Write property test in `tests/test_verdict_prop_13_large_amount_note.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421387218
+      }
+    ],
+    "3.5 Write property test in `tests/test_verdict_prop_14_collection_note.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421388001
+      }
+    ],
+    "3.6 Write property test in `tests/test_verdict_prop_15_note_list.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421388841
+      }
+    ],
+    "4. Add Decision and decide_with_notes": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421389474
+      },
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421678343
+      }
+    ],
+    "4.1 Add the frozen `Decision` dataclass and `decide_with_notes` to `verdict.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421678190
+      }
+    ],
+    "4.2 Write property test in `tests/test_verdict_prop_11_notes_keep_verdict.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421678687
+      }
+    ],
+    "4.3 Write example test for Decision in `tests/test_verdict_decision_example.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421678958
+      }
+    ],
+    "5.1 Add `Explainer` (abstract), `FakeExplainer` and `TemplateExplainer` to `verdict.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421679500
+      }
+    ],
+    "5. Implement the Explainers": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421679670
+      }
+    ],
+    "5.2 Write example tests for TemplateExplainer in `tests/test_verdict_template_examples.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421680271
+      }
+    ],
+    "5.3 Write property test in `tests/test_verdict_prop_16_template_text.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421681137
+      }
+    ],
+    "5.4 Write property test in `tests/test_verdict_prop_17_fake_explainer.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421681928
+      }
+    ],
+    "6.1 Add `build_reply(verdict, parsed, explainer, risk_notes=None)` to `verdict.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421682784
+      }
+    ],
+    "6. Implement build_reply and the smoke checks": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421682983
+      }
+    ],
+    "6.2 Write example tests for replies in `tests/test_verdict_reply_examples.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421683598
+      }
+    ],
+    "6.3 Write property test in `tests/test_verdict_prop_18_reply_survives_bad_explainers.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421684354
+      }
+    ],
+    "6.4 Write property test in `tests/test_verdict_prop_19_reminder_enforced.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421685154
+      }
+    ],
+    "6.5 Write property test in `tests/test_verdict_prop_20_reply_idempotent.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421686189
+      }
+    ],
+    "6.6 Write smoke checks in `tests/test_verdict_smoke.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421686749
+      }
+    ],
+    "7. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421687542
+      }
+    ]
+  }
+}

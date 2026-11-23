@@ -1,0 +1,364 @@
+{
+  "pbtResults": {
+    "1.2 Write property test for dataclass round trip": {
+      "status": "passed",
+      "lastRunTimestamp": 1795417626936
+    },
+    "1.3 Write property test for unknown fields": {
+      "status": "passed",
+      "lastRunTimestamp": 1795417631575
+    },
+    "1.4 Write property test for invalid values": {
+      "status": "passed",
+      "lastRunTimestamp": 1795417634484
+    },
+    "2.2 Write property test for constant Noop answers": {
+      "status": "passed",
+      "lastRunTimestamp": 1795417655980
+    },
+    "3.2 Write property test for name normalisation": {
+      "status": "passed",
+      "lastRunTimestamp": 1795417690088
+    },
+    "3.3 Write property test for phone normalisation across forms": {
+      "status": "passed",
+      "lastRunTimestamp": 1795417693582
+    },
+    "3.4 Write property test for invalid phones": {
+      "status": "passed",
+      "lastRunTimestamp": 1795417696756
+    },
+    "3.5 Write property test for account normalisation": {
+      "status": "passed",
+      "lastRunTimestamp": 1795417701078
+    },
+    "4.2 Write property test for hash format and value": {
+      "status": "passed",
+      "lastRunTimestamp": 1795417725705
+    },
+    "4.3 Write property test for hash equality": {
+      "status": "passed",
+      "lastRunTimestamp": 1795417729347
+    },
+    "5.4 Write property test for Hook_Off hiding secrets and hashes": {
+      "status": "passed",
+      "lastRunTimestamp": 1795418616635
+    },
+    "5.6 Write property test for hashes-only Signals": {
+      "status": "passed",
+      "lastRunTimestamp": 1795418617279
+    },
+    "6.2 Write property test for lookup fallback": {
+      "status": "passed",
+      "lastRunTimestamp": 1795418617927
+    },
+    "6.3 Write property test for advisory lookup and clean logs": {
+      "status": "passed",
+      "lastRunTimestamp": 1795418618948
+    },
+    "7.2 Write property test for reports following the verdict code": {
+      "status": "passed",
+      "lastRunTimestamp": 1795418619282
+    },
+    "7.3 Write property test for hidden, non-blocking report failures": {
+      "status": "passed",
+      "lastRunTimestamp": 1795418620275
+    },
+    "7.4 Write property test for identity and outcome pass-through": {
+      "status": "passed",
+      "lastRunTimestamp": 1795418620532
+    }
+  },
+  "executionHistory": {
+    "1. Contract dataclasses and conversion": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795416658366
+      },
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417874768
+      }
+    ],
+    "1.1 Create the module with Signals, Verdict, Match, LookupResult and ReportReceipt": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417874569
+      }
+    ],
+    "1.2 Write property test for dataclass round trip": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417875302
+      }
+    ],
+    "1.3 Write property test for unknown fields": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417876157
+      }
+    ],
+    "1.4 Write property test for invalid values": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417876620
+      }
+    ],
+    "2.1 Add the abstract PatternNetwork and NoopPatternNetwork": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417877049
+      }
+    ],
+    "2. PatternNetwork interface and NoopPatternNetwork": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417877227
+      }
+    ],
+    "2.2 Write property test for constant Noop answers": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417877653
+      }
+    ],
+    "2.3 Write example test for the contract hook-off JSON": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417877967
+      }
+    ],
+    "3.1 Implement normalise_name, normalise_phone and normalise_account": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417878393
+      }
+    ],
+    "3. Normaliser": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417878540
+      }
+    ],
+    "3.2 Write property test for name normalisation": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417878835
+      }
+    ],
+    "3.3 Write property test for phone normalisation across forms": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417879261
+      }
+    ],
+    "3.4 Write property test for invalid phones": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417879557
+      }
+    ],
+    "3.5 Write property test for account normalisation": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417880916
+      }
+    ],
+    "3.6 Write example tests for normalisation": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417881283
+      }
+    ],
+    "4.1 Implement hash_value": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417881705
+      }
+    ],
+    "4. Hasher": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417881893
+      }
+    ],
+    "4.2 Write property test for hash format and value": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417882256
+      }
+    ],
+    "4.3 Write property test for hash equality": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417882608
+      }
+    ],
+    "5. Hook_Config and Signals privacy builder": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795417889576
+      },
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419552821
+      }
+    ],
+    "5.1 Implement Hook_Config functions": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419552083
+      }
+    ],
+    "5.2 Implement the Signals privacy builder": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419552641
+      }
+    ],
+    "5.3 Write property test for hook flag parsing": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419553220
+      }
+    ],
+    "5.4 Write property test for Hook_Off hiding secrets and hashes": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419553625
+      }
+    ],
+    "5.5 Write property test for missing inputs": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419554324
+      }
+    ],
+    "5.6 Write property test for hashes-only Signals": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419554739
+      }
+    ],
+    "5.7 Write example test that Hook_Off hides key and merchant_ref": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419555096
+      }
+    ],
+    "6.1 Implement safe_lookup": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419556150
+      }
+    ],
+    "6. Network_Caller: safe lookup": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419556341
+      }
+    ],
+    "6.2 Write property test for lookup fallback": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419556890
+      }
+    ],
+    "6.3 Write property test for advisory lookup and clean logs": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419557315
+      }
+    ],
+    "6.4 Write example test for a lookup slower than 1.5 seconds": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419557799
+      }
+    ],
+    "7.1 Implement safe_report": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419558336
+      }
+    ],
+    "7. Network_Caller: safe report and hook-off end-to-end": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419558528
+      }
+    ],
+    "7.2 Write property test for reports following the verdict code": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419558921
+      }
+    ],
+    "7.3 Write property test for hidden, non-blocking report failures": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419559424
+      }
+    ],
+    "7.4 Write property test for identity and outcome pass-through": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419560214
+      }
+    ],
+    "7.5 Write the hook-off caller test and smoke checks": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419560968
+      }
+    ],
+    "8. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419561618
+      }
+    ]
+  }
+}

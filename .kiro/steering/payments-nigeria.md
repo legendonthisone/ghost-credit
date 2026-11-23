@@ -22,6 +22,7 @@ Formats differ between banks, so never hard-code one bank's layout. Look for the
 - DATE_ODD: future date, impossible time, or a date format the bank does not use.
 - SCREENSHOT_EDIT_SIGNS: mismatched fonts, uneven alignment or blurred areas around the amount.
 - PRESSURE_LANGUAGE: the customer pushes to release goods "now" before the owner can check.
+- TRANSFER_REQUEST_WORDING: the message says a transfer was requested, not received, as in "Transfer Request Successful".
 
 ## Paystack: what it can and cannot confirm
 - Paystack can only confirm money that moved through Paystack, for example Pay with Transfer or a dedicated virtual account.

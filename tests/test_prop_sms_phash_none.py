@@ -11,8 +11,9 @@ def test_red_flag_codes_order_and_new_last_entry():
         "DATE_ODD",
         "PRESSURE_LANGUAGE",
     )
-    assert RED_FLAG_CODES[-1] == "SCREENSHOT_EDIT_SIGNS"
-    assert len(RED_FLAG_CODES) == 6
+    assert RED_FLAG_CODES[-2] == "SCREENSHOT_EDIT_SIGNS"
+    assert RED_FLAG_CODES[-1] == "TRANSFER_REQUEST_WORDING"
+    assert len(RED_FLAG_CODES) == 7
 
 
 # Feature: screenshot-reader, Property 8: SMS parsing leaves the screenshot hash empty

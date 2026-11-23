@@ -2,7 +2,7 @@
 
 ## Overview
 
-`parse_sms_alert(text, sender_id) -> ParsedAlert` in `src/ghost_credit/parser.py` is a pure, total function. It reads a bank credit alert SMS and its sender header, extracts labelled fields, and reports the red flags that text and sender can show: `SENDER_ID_MISMATCH`, `BALANCE_LINE_MISSING`, `AMOUNT_FORMAT_ODD`, `DATE_ODD` and `PRESSURE_LANGUAGE`. It does not choose the verdict (the Rules_Engine does, per `.kiro/steering/payments-nigeria.md`), and it makes no AI, network or file calls.
+`parse_sms_alert(text, sender_id) -> ParsedAlert` in `src/ghost_credit/parser.py` is a pure, total function. It reads a bank credit alert SMS and its sender header, extracts labelled fields, and reports the red flags that text and sender can show: `SENDER_ID_MISMATCH`, `BALANCE_LINE_MISSING`, `AMOUNT_FORMAT_ODD`, `DATE_ODD`, `PRESSURE_LANGUAGE` and `TRANSFER_REQUEST_WORDING`. (`SCREENSHOT_EDIT_SIGNS` is in `RED_FLAG_CODES` but needs an image, so this parser never sets it.) It does not choose the verdict (the Rules_Engine does, per `.kiro/steering/payments-nigeria.md`), and it makes no AI, network or file calls.
 
 Output fields feed the `signals` object in `docs/pattern-network-contract.md`: `amount_kobo`, `currency`, `claimed_bank`, `sender_id`, `claimed_reference` and `red_flags` map by name. Money is an integer in kobo (contract rule 6).
 
@@ -31,6 +31,8 @@ flowchart TD
     B --> G[account / narration / reference / bank extractors]
     B --> H[date scanner]
     B --> I[pressure phrase matcher]
+    B --> T[transfer request detector]
+    T --> J
     D --> J[flag collector]
     C --> J
     E --> J
@@ -60,7 +62,8 @@ All in `src/ghost_credit/parser.py`, with `src/ghost_credit/__init__.py` present
 ```python
 RED_FLAG_CODES = (
     "SENDER_ID_MISMATCH", "BALANCE_LINE_MISSING", "AMOUNT_FORMAT_ODD",
-    "DATE_ODD", "PRESSURE_LANGUAGE",
+    "DATE_ODD", "PRESSURE_LANGUAGE", "SCREENSHOT_EDIT_SIGNS",
+    "TRANSFER_REQUEST_WORDING",
 )
 
 @dataclass(frozen=True)
@@ -84,6 +87,7 @@ def parse_sms_alert(text: str, sender_id: str | None) -> ParsedAlert: ...
 ### Module-level named lists
 
 - `PRESSURE_PHRASES`: tuple of lower-case phrases, for example `"release now"`, `"before the owner"`, `"send the goods now"`, `"i am in a hurry"`, `"don't wait"`, `"no time"`. The starting list is a judgement call and is one place to edit.
+- `TRANSFER_REQUEST_PHRASES`: tuple of lower-case phrases that say a transfer was requested, kept in one place like `PRESSURE_PHRASES`. The starting list is `"transfer request successful"` and `"transfer request has been"`. Two further module constants hold the proximity rule: `_REQUEST_WORDS = "request successful"`, `_TRANSFER_WORD = "transfer"` and `_NEAR_LIMIT = 40`.
 - `KNOWN_BANKS`: tuple of `(canonical_name, (aliases...))` holding the 19 Nigerian banks listed in `parser.py` and no others, for example `("GTBank", ("gtbank", "gtb", "guaranty trust"))`, `("Access Bank", ("access bank", "accessbank"))`, `("Zenith Bank", ...)`, `("UBA", ...)`, `("First Bank", ("first bank", "firstbank"))`, `("Opay", ...)`, `("Kuda", ...)`, `("Moniepoint", ...)`, `("Palmpay", ...)`, `("Wema Bank", ...)`, `("Sterling Bank", ...)`, `("Fidelity Bank", ...)`, `("Stanbic IBTC", ...)`. Aliases match on word boundaries, so `gtb` does not match inside another word. When several banks match, the one whose match starts earliest in the text wins, and the sender_id is searched only if the text has none.
 - `DATE_FORMATS`: the Recognised_Date_Formats as compiled patterns plus a builder for each.
 
@@ -103,6 +107,7 @@ def parse_sms_alert(text: str, sender_id: str | None) -> ParsedAlert: ...
 | `_scan_dates(text, masked_spans)` | Finds Recognised_Date_Formats dates (each with an optional Recognised_Time) and Unrecognised_Date_Shapes, skips matches that overlap `masked_spans` (balance, account and reference spans), validates the rest, and returns `(alert_time | None, date_odd: bool)`. | 3.3, 7.x |
 | `_has_pressure(text)` | Replaces curly quotes with straight ones (so `don’t wait` matches `don't wait`), lower-cases, collapses whitespace runs to one space, then checks each phrase with word-boundary lookarounds. | 8.x |
 | `_sender_is_phone(sender_id)` | Phone_Number_Sender test. | 4.x |
+| `_has_transfer_request(text)` | Detector for `TRANSFER_REQUEST_WORDING`. Normalises the text the same way as `_has_pressure` (shared helper), then returns True if a phrase from `TRANSFER_REQUEST_PHRASES` matches as whole words, or if a whole-word `request successful` and a whole-word `transfer` are Near each other. | 11.x |
 
 ### Key matching rules
 
@@ -135,6 +140,14 @@ To detect these, the amount scan first captures the loose token `[\d][\d.,]*` af
 - Matches that overlap a Balance_Line, the masked account or the claimed reference span are skipped, so they neither set `alert_time` nor add DATE_ODD (7.11). `_parse_body` passes these three kinds of span as `masked_spans`.
 
 Future dates are out of scope (a pure function has no clock).
+
+**Transfer request wording.** `_has_transfer_request` reuses the normalisation helper used by `_has_pressure`: curly quotes to straight quotes, lower-case, runs of whitespace to one space. Whole-word matching uses `(?<!\w)` and `(?!\w)` lookarounds, so `transferred` and `transfers` do not match `transfer`.
+
+1. Phrase test: each phrase in `TRANSFER_REQUEST_PHRASES` is searched as whole words. One hit is enough.
+2. Proximity test: collect the match spans of `request successful` and of `transfer`. The flag is set when some pair has `later.start - earlier.end <= 40` (Near, in either order). Overlap cannot happen because the two matches are different words.
+3. The result is a bool, so the flag collector lists the code once however many matches exist. The detector reads only the text, never the sender_id.
+
+The search is linear in the text length. Each pattern is a literal with lookarounds, so there is no backtracking risk for the 10,000-character limit.
 
 **Sender classification.** `Phone_Number_Sender`: after `strip()` does not apply (the raw value is kept for output, but classification uses the raw value, per the glossary: only digits, spaces, hyphens and an optional leading `+`). The count of digits is 7 to 15. A string with any letter is a Bank_Sender_Name. `None`, `""` and whitespace-only are not flagged. Everything else is not flagged.
 
@@ -173,7 +186,7 @@ Invariants:
 
 *A property is a characteristic or behavior that should hold true across all valid executions of a system-essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
-Reflection on redundancy: the prework found about 30 testable criteria. Totality (1.1, 9.3, 9.4), unchanged `sender_id` (1.5), unique known flags (1.6) and determinism (9.5) all assert facts about the output of one call over arbitrary input, so they merge into one property. SENDER_ID_MISMATCH criteria 4.1, 4.5 and 4.6 merge into one property. Amount criteria 2.1 to 2.4, 2.6, 2.10 and 6.5 merge into the round-trip property. Requirement 10 requires at least one Hypothesis test for each of the eight properties below (see Testing Strategy).
+Reflection on redundancy: the prework found about 30 testable criteria. Totality (1.1, 9.3, 9.4), unchanged `sender_id` (1.5), unique known flags (1.6) and determinism (9.5) all assert facts about the output of one call over arbitrary input, so they merge into one property. SENDER_ID_MISMATCH criteria 4.1, 4.5 and 4.6 merge into one property. Amount criteria 2.1 to 2.4, 2.6, 2.10 and 6.5 merge into the round-trip property. Requirement 10 requires at least one Hypothesis test for each of the nine properties below (see Testing Strategy). Property 9 is an addition for Requirement 11 and keeps the numbers of Properties 1 to 8.
 
 ### Property 1: Amount round trip
 
@@ -223,6 +236,12 @@ Reflection on redundancy: the prework found about 30 testable criteria. Totality
 
 **Validates: Requirements 2.9, 6.1, 6.2, 6.3, 6.6, 10.11**
 
+### Property 9: Transfer request phrase adds the flag exactly once
+
+*For any* Clean_Text (text that triggers no flag when parsed with a Bank_Sender_Name sender_id) and *for any* phrase from `TRANSFER_REQUEST_PHRASES`, written with any letter case and any whitespace runs between words, and inserted between the lines of the Clean_Text at any position, `red_flags` contains `TRANSFER_REQUEST_WORDING` exactly once and its other entries equal the `red_flags` of the Clean_Text alone.
+
+**Validates: Requirements 11.1, 11.3, 11.7, 11.9, 10.15**
+
 ## Error Handling
 
 The function has no error return. Every failure mode maps to a defined output:
@@ -239,7 +258,7 @@ The function has no error return. Every failure mode maps to a defined output:
 
 ## Testing Strategy
 
-Requirement 10 requires at least 5 pytest example tests and one Hypothesis property test for each of Properties 1 to 8, all in `tests/`, offline, with synthetic data.
+Requirement 10 requires at least 5 pytest example tests (plus 3 for `TRANSFER_REQUEST_WORDING`) and one Hypothesis property test for each of Properties 1 to 9, all in `tests/`, offline, with synthetic data.
 
 **Library:** Hypothesis (dev dependency). Each property test uses `@settings(max_examples=200)` (at least 100) and starts with a comment of the form `# Feature: alert-parser, Property N: <title>`.
 
@@ -255,6 +274,7 @@ Requirement 10 requires at least 5 pytest example tests and one Hypothesis prope
 | `test_date_validity` | 6 | Valid: a datetime from 1900 to 2100 written in a randomly chosen Recognised_Date_Format, followed by a time with or without seconds. Invalid: the same layout with exactly one impossible component (day 0 or 32 to 99, hour 24 to 99, minute 60 to 99, 30 or 31 February, 29 February in a non-leap year, second 60 to 99 only when seconds are written, month 0 or 13 to 99 only for the numeric-month layouts). Every generated date carries a time. |
 | `test_pressure_phrase_detection` | 7 | A phrase from `PRESSURE_PHRASES` with random letter case and whitespace runs, embedded as whole words and inside a longer word. |
 | `test_odd_amount_formats` | 8 | Amounts with 3 or more decimal digits, a comma group that is not 3 digits, or mixed comma and full stop separators. |
+| `test_transfer_request_phrase_adds_flag_once` | 9 | A Clean_Text built from a bank-style credit line, a Balance_Line and an optional narration with no date and no flag trigger, split into lines. A phrase from `TRANSFER_REQUEST_PHRASES` with random letter case and whitespace runs is inserted between lines at a random index, with a Bank_Sender_Name such as `GTBANK`. Assert the flag appears once and the other flags equal the Clean_Text result. |
 
 **Example tests** (at least 5):
 
@@ -263,6 +283,14 @@ Requirement 10 requires at least 5 pytest example tests and one Hypothesis prope
 3. `50,000.00 CR` gives 5,000,000, currency None.
 4. `NGN 50k` gives 5,000,000.
 5. A synthetic forged alert from a phone-number sender, no balance line, with `release now` pressure text and an impossible date such as `31/02/2026 10:15`. It asserts that `SENDER_ID_MISMATCH`, `BALANCE_LINE_MISSING`, `PRESSURE_LANGUAGE` and `DATE_ODD` are all in `red_flags`.
+
+**Example tests for `TRANSFER_REQUEST_WORDING`** (at least 3, Requirement 10.14):
+
+1. `Transfer Request Successful` in an otherwise normal alert puts the flag in `red_flags`.
+2. A normal credit alert from `GTBANK` with a Balance_Line does not have the flag.
+3. Curly quotes and odd whitespace, such as `TRANSFER   request\tSUCCESSFUL`, still flag it.
+
+Optional extras: `request successful` 41 characters from `transfer` does not flag, 40 characters does, and `transferred` does not.
 
 Synthetic alerts use invented banks' common sender names and masked accounts like `012****789`, no real people.
 
@@ -286,3 +314,5 @@ Synthetic alerts use invented banks' common sender names and masked accounts lik
 6. Account, narration, reference and bank extractors.
 7. Five example tests.
 8. Eight Hypothesis property tests, then a full `pytest` run.
+
+Addition after the original build (outside the 8-task limit): task 9 adds the `TRANSFER_REQUEST_WORDING` detector, its three example tests, Property 9 and a final full run.

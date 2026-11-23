@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "name": "Refresh README",
+  "description": "Keeps README.md in step with the specs; manual only, so it spends credits only when you click it.",
+  "version": "1",
+  "when": { "type": "userTriggered" },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Update README.md from the specs in .kiro/specs and the steering files in .kiro/steering. Keep the existing text that is still true, add or fix sections for each built feature (alert parser, screenshot reader, Paystack verifier, pattern network hook, verdict engine, check pipeline), list how to run the tests with python -m pytest, and keep the Pre-existing work section if there is one. Never read .env or print any key. Do not change any code."
+  }
+}

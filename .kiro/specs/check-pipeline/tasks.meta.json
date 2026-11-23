@@ -1,0 +1,288 @@
+{
+  "pbtResults": {
+    "1.4 Write property test for the merchant category": {
+      "status": "passed",
+      "lastRunTimestamp": 1795421905370
+    },
+    "2.2 Write property test for the merge": {
+      "status": "passed",
+      "lastRunTimestamp": 1795421939723
+    },
+    "2.3 Write property test for merged red flags": {
+      "status": "passed",
+      "lastRunTimestamp": 1795421940423
+    },
+    "3.3 Write property test for the Signals fields": {
+      "status": "passed",
+      "lastRunTimestamp": 1795421975627
+    },
+    "3.4 Write property test for no network traffic without an amount": {
+      "status": "passed",
+      "lastRunTimestamp": 1795421976310
+    },
+    "4.2 Write property test for totality": {
+      "status": "passed",
+      "lastRunTimestamp": 1795422467596
+    },
+    "4.3 Write property test for CONFIRMED matching the engine": {
+      "status": "passed",
+      "lastRunTimestamp": 1795422468392
+    },
+    "4.4 Write property test for dependency failures": {
+      "status": "passed",
+      "lastRunTimestamp": 1795422468760
+    },
+    "4.5 Write property test for the verdict coming only from the engine": {
+      "status": "passed",
+      "lastRunTimestamp": 1795422469818
+    },
+    "4.6 Write property test for the reminder on unconfirmed replies": {
+      "status": "passed",
+      "lastRunTimestamp": 1795422470382
+    },
+    "4.7 Write property test for reading sources once": {
+      "status": "passed",
+      "lastRunTimestamp": 1795422471032
+    },
+    "4.8 Write property test for reports": {
+      "status": "passed",
+      "lastRunTimestamp": 1795422471452
+    }
+  },
+  "executionHistory": {
+    "1. Skeleton and fixed pieces of `pipeline.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795421702830
+      },
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422240171
+      }
+    ],
+    "1.1 Create `src/ghost_credit/pipeline.py` with constants, types and fixed helpers": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422240037
+      }
+    ],
+    "1.2 Create the shared test fakes in `tests/pipeline_fakes.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422240512
+      }
+    ],
+    "1.3 Write example tests for the fallback shape and `make_paystack_verify`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422240807
+      }
+    ],
+    "1.4 Write property test for the merchant category": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422241164
+      }
+    ],
+    "2.1 Add the source helpers and `merge_alerts` to `pipeline.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422241470
+      }
+    ],
+    "2. Read the sources and merge them": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422241579
+      }
+    ],
+    "2.2 Write property test for the merge": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422241945
+      }
+    ],
+    "2.3 Write property test for merged red flags": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422242192
+      }
+    ],
+    "2.4 Write example tests for reading and merging": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422242772
+      }
+    ],
+    "3.1 Add `_check_paystack` to `pipeline.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422243165
+      }
+    ],
+    "3.2 Add `_build_signals`, the empty lookup constant and `_report` to `pipeline.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422244315
+      }
+    ],
+    "3. Paystack and network steps": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422244483
+      }
+    ],
+    "3.3 Write property test for the Signals fields": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422244897
+      }
+    ],
+    "3.4 Write property test for no network traffic without an amount": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422245553
+      }
+    ],
+    "3.5 Write example tests for Paystack and Signals failures": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422246338
+      }
+    ],
+    "4. Wire `run_check`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422246752
+      },
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422524710
+      }
+    ],
+    "4.1 Add `run_check` to `pipeline.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422524532
+      }
+    ],
+    "4.2 Write property test for totality": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422528866
+      }
+    ],
+    "4.3 Write property test for CONFIRMED matching the engine": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422529377
+      }
+    ],
+    "4.4 Write property test for dependency failures": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422529675
+      }
+    ],
+    "4.5 Write property test for the verdict coming only from the engine": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422530094
+      }
+    ],
+    "4.6 Write property test for the reminder on unconfirmed replies": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422530365
+      }
+    ],
+    "4.7 Write property test for reading sources once": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422530610
+      }
+    ],
+    "4.8 Write property test for reports": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422531144
+      }
+    ],
+    "4.9 Write example tests for the verdict paths": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422531494
+      }
+    ],
+    "4.10 Write example tests for order, failures, reports and risk notes": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422531825
+      }
+    ],
+    "4.11 Write the full `PATTERN_NETWORK=off` example test": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422532122
+      }
+    ],
+    "5.1 Write smoke checks for `pipeline.py`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422532579
+      }
+    ],
+    "5. Smoke checks and secrets": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422532716
+      }
+    ],
+    "5.2 Write the secret-key example test": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422533079
+      }
+    ],
+    "6. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795422533328
+      }
+    ]
+  }
+}

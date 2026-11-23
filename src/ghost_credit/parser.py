@@ -20,6 +20,7 @@ RED_FLAG_CODES = (
     "DATE_ODD",
     "PRESSURE_LANGUAGE",
     "SCREENSHOT_EDIT_SIGNS",
+    "TRANSFER_REQUEST_WORDING",
 )
 
 # Lower-case phrases that urge the shop to release goods at once. Edit here.
@@ -31,6 +32,15 @@ PRESSURE_PHRASES = (
     "don't wait",
     "no time",
 )
+
+# Lower-case phrases that say a transfer was requested, not received. Edit here.
+TRANSFER_REQUEST_PHRASES = (
+    "transfer request successful",
+    "transfer request has been",
+)
+_REQUEST_WORDS = "request successful"
+_TRANSFER_WORD = "transfer"
+_NEAR_LIMIT = 40  # most characters allowed between the two words
 
 # (canonical name, aliases). Aliases are lower case and matched on word boundaries.
 KNOWN_BANKS = (
@@ -319,9 +329,42 @@ def _has_pressure(text: str) -> bool:
     Matching ignores letter case and treats any whitespace run as one space.
     A phrase inside a longer word does not match.
     """
-    text = text.translate(_QUOTE_MAP)
-    normalised = _WHITESPACE_RUN_RE.sub(" ", text.lower())
+    normalised = _normalise_text(text)
     return any(pattern.search(normalised) for pattern in _PRESSURE_RES)
+
+
+def _normalise_text(text: str) -> str:
+    """Straighten curly quotes, lower-case, and turn each whitespace run into one space."""
+    return _WHITESPACE_RUN_RE.sub(" ", text.translate(_QUOTE_MAP).lower())
+
+
+def _whole_word_re(phrase: str) -> re.Pattern[str]:
+    """Compile a pattern that matches ``phrase`` only as whole words."""
+    return re.compile(r"(?<!\w)" + re.escape(phrase) + r"(?!\w)")
+
+
+_TRANSFER_PHRASE_RES = tuple(_whole_word_re(p) for p in TRANSFER_REQUEST_PHRASES)
+_REQUEST_WORDS_RE = _whole_word_re(_REQUEST_WORDS)
+_TRANSFER_WORD_RE = _whole_word_re(_TRANSFER_WORD)
+
+
+def _has_transfer_request(text: str) -> bool:
+    """True when ``text`` says a transfer was requested rather than received.
+
+    Matches a listed phrase, or the words ``request successful`` and
+    ``transfer`` within 40 characters of each other. Case, curly quotes and
+    whitespace runs are ignored, and words inside longer words do not count.
+    """
+    normalised = _normalise_text(text)
+    if any(p.search(normalised) for p in _TRANSFER_PHRASE_RES):
+        return True
+    requests = [m.span() for m in _REQUEST_WORDS_RE.finditer(normalised)]
+    transfers = [m.span() for m in _TRANSFER_WORD_RE.finditer(normalised)]
+    return any(
+        (t[0] - r[1] <= _NEAR_LIMIT) if t[0] >= r[1] else (r[0] - t[1] <= _NEAR_LIMIT)
+        for r in requests
+        for t in transfers
+    )
 
 
 _ACCOUNT_RE = re.compile(r"(?<![\d*])\d{3,4}\*{1,6}\d{3,4}(?![\d*])")
@@ -487,6 +530,8 @@ def _parse_body(text: str, sender_id: str | None) -> ParsedAlert:
     claimed_reference = reference[0] if reference else None
     if _has_pressure(text):
         flags.add("PRESSURE_LANGUAGE")
+    if _has_transfer_request(text):
+        flags.add("TRANSFER_REQUEST_WORDING")
     balances = _balance_matches(text)
     available_balance_kobo = balances[0][1] if balances else None
     if not balances:

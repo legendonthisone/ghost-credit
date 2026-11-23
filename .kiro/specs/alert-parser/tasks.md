@@ -152,12 +152,38 @@ Implement `parse_sms_alert(text, sender_id) -> ParsedAlert` in `src/ghost_credit
     - Ensure all tests pass, ask the user if questions arise.
     - _Requirements: 10.12, 10.13_
 
+- [x] 9. TRANSFER_REQUEST_WORDING
+  - [x] 9.1 Implement the detector, append the code to `RED_FLAG_CODES` and wire it in `parse_sms_alert`
+    - In `src/ghost_credit/parser.py`, add `TRANSFER_REQUEST_PHRASES` (`transfer request successful`, `transfer request has been`) as a named list next to `PRESSURE_PHRASES`, plus the constants for `request successful`, `transfer` and the 40-character Near limit
+    - Add `_has_transfer_request(text)`: normalise (curly quotes, case, whitespace runs) with the helper shared with `_has_pressure`, match whole words, and apply the phrase test and the proximity test
+    - Append `TRANSFER_REQUEST_WORDING` as the last entry of `RED_FLAG_CODES`, after `SCREENSHOT_EDIT_SIGNS`, so the order is `SENDER_ID_MISMATCH`, `BALANCE_LINE_MISSING`, `AMOUNT_FORMAT_ODD`, `DATE_ODD`, `PRESSURE_LANGUAGE`, `SCREENSHOT_EDIT_SIGNS`, `TRANSFER_REQUEST_WORDING`
+    - Wire the detector into `parse_sms_alert` and the flag collector, including the totality wrapper
+    - _Requirements: 1.7, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8_
+
+  - [x]* 9.2 Write example tests for `TRANSFER_REQUEST_WORDING`
+    - File `tests/test_example_transfer_request.py`, synthetic alerts only
+    - `Transfer Request Successful` in an alert flags it; a normal credit alert with a Balance_Line from a Bank_Sender_Name does not; curly quotes and odd whitespace such as `TRANSFER   request\tSUCCESSFUL` still flag it
+    - Optional extras: 40 versus 41 characters between `request successful` and `transfer`, and `transferred` not matching
+    - _Requirements: 10.14, 11.1, 11.2, 11.3, 11.4, 11.5_
+
+  - [x]* 9.3 Write property test for the transfer request phrase
+    - File `tests/test_prop_transfer_request.py`, `@settings(max_examples=200)`, comment `# Feature: alert-parser, Property 9: Transfer request phrase adds the flag exactly once`
+    - Build Clean_Text lines, insert a phrase from `TRANSFER_REQUEST_PHRASES` (random case and whitespace runs) between lines at a random index, and assert the flag appears once and the other flags equal those of the Clean_Text
+    - **Property 9: Transfer request phrase adds the flag exactly once**
+    - **Validates: Requirements 11.1, 11.3, 11.7, 11.9, 10.15**
+
+  - [x] 9.4 Run the full `pytest` suite and fix failures
+    - Run a single `pytest` execution from the project root with `PATTERN_NETWORK=off` and no network, and confirm the original tests still pass
+    - Ensure all tests pass, ask the user if questions arise.
+    - _Requirements: 10.12, 10.13_
+
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for a faster MVP. Requirement 10 expects all 5 example tests and all 8 property tests to exist, so skip them only deliberately.
 - Each test lives in its own file so the 5 examples and 8 properties can run in parallel without file conflicts.
 - The 10,000-character timing limit (Requirement 9.6) and bank matching (Requirement 3.6) have no automated test. The design uses bounded regexes with no nested quantifiers.
 - All parser tasks edit `src/ghost_credit/parser.py`, so they run in separate waves.
+- Task 9 is an addition made after the original build. The earlier limit of 8 tasks applied to the original build only.
 
 ## Task Dependency Graph
 
@@ -175,7 +201,10 @@ Implement `parse_sms_alert(text, sender_id) -> ParsedAlert` in `src/ghost_credit
     { "id": 8, "tasks": ["5.1"] },
     { "id": 9, "tasks": ["6.2"] },
     { "id": 10, "tasks": ["7.1", "7.2", "7.3", "7.4", "7.5", "8.1", "8.2", "8.3", "8.4", "8.5", "8.6", "8.7", "8.8"] },
-    { "id": 11, "tasks": ["8.9"] }
+    { "id": 11, "tasks": ["8.9"] },
+    { "id": 12, "tasks": ["9.1"] },
+    { "id": 13, "tasks": ["9.2", "9.3"] },
+    { "id": 14, "tasks": ["9.4"] }
   ]
 }
 ```

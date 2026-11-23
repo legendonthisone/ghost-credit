@@ -24,7 +24,11 @@ Out of scope: SCREENSHOT_EDIT_SIGNS (needs an image), detection of future dates 
 - **Recognised_Time**: A 24-hour clock time `HH:MM[:SS]` with `HH` of 1 or 2 digits, `MM` of 2 digits, an optional `SS` of 2 digits, and no digit directly after it.
 - **Unrecognised_Date_Shape**: Digit groups of 1 to 4, 1 to 2 and 1 to 4 digits separated by `/` or `-` (for example `12/03/24` or `2026/03/12`) that match no Recognised_Date_Formats layout, with the same boundary rules as a Recognised_Date_Formats date.
 - **Known_Bank_List**: The list of Nigerian bank names, each with a canonical name, kept in one named list in `parser.py` and matched regardless of letter case.
-- **Red_Flag_Code**: One of the strings `SENDER_ID_MISMATCH`, `BALANCE_LINE_MISSING`, `AMOUNT_FORMAT_ODD`, `DATE_ODD` or `PRESSURE_LANGUAGE`.
+- **Red_Flag_Code**: One of the strings `SENDER_ID_MISMATCH`, `BALANCE_LINE_MISSING`, `AMOUNT_FORMAT_ODD`, `DATE_ODD`, `PRESSURE_LANGUAGE`, `SCREENSHOT_EDIT_SIGNS` or `TRANSFER_REQUEST_WORDING`. Alert_Parser can produce every code except `SCREENSHOT_EDIT_SIGNS`. The codes are kept in one tuple named `RED_FLAG_CODES` in `parser.py`, in the order listed here.
+- **Transfer_Request_Phrase**: Text in Alert_Text that says a transfer was requested rather than received. It is either a phrase from the named list `TRANSFER_REQUEST_PHRASES` in `parser.py` (the list holds `transfer request successful` and `transfer request has been`), or the words `request successful` and `transfer` appearing Near each other.
+- **Near**: Two matches are Near each other when, after normalisation, at most 40 characters lie between the end of the earlier match and the start of the later match, in either order. The words `request successful` and `transfer` are each matched as whole words.
+- **Normalised_Text**: Alert_Text with curly quotes replaced by straight quotes, letters lower-cased, and every run of whitespace replaced by one space.
+- **Clean_Text**: Alert_Text that triggers no Red_Flag_Code when parsed with a Bank_Sender_Name as sender_id. It has a Balance_Line, no odd amount, no date, and no Pressure_Phrase or Transfer_Request_Phrase.
 - **Rules_Engine**: The later component that chooses the verdict from Red_Flag_Codes and Paystack results. It is not part of this feature.
 
 ## Requirements
@@ -41,6 +45,7 @@ Out of scope: SCREENSHOT_EDIT_SIGNS (needs an image), detection of future dates 
 4. WHEN no Red_Flag_Code applies, THE Alert_Parser SHALL set `red_flags` to an empty list.
 5. THE Alert_Parser SHALL set `sender_id` in the ParsedAlert to the sender_id argument unchanged, with no trimming and no change of letter case.
 6. WHEN more than one condition produces the same Red_Flag_Code, THE Alert_Parser SHALL list that Red_Flag_Code exactly once in `red_flags`.
+7. THE Alert_Parser SHALL list the codes in `red_flags` in the order of `RED_FLAG_CODES`: `SENDER_ID_MISMATCH`, `BALANCE_LINE_MISSING`, `AMOUNT_FORMAT_ODD`, `DATE_ODD`, `PRESSURE_LANGUAGE`, `SCREENSHOT_EDIT_SIGNS`, `TRANSFER_REQUEST_WORDING`.
 
 ### Requirement 2: Extract the amount as integer kobo
 
@@ -176,3 +181,21 @@ Out of scope: SCREENSHOT_EDIT_SIGNS (needs an image), detection of future dates 
 11. THE test suite SHALL contain a Hypothesis property test that writes an amount with a decimal part of 3 or more digits, a comma group that is not exactly 3 digits, or mixed comma and full stop separators outside a Supported_Amount_Format, and checks that `AMOUNT_FORMAT_ODD` is present and `amount_kobo` is None when that amount is the first amount outside a Balance_Line (Requirements 2.9 and 6.1 to 6.3, 6.6).
 12. WHEN `pytest` runs from the project root, THE test suite SHALL run with no network connection.
 13. IF a test fails, THEN THE test suite SHALL report the failing test by name and `pytest` SHALL exit with a non-zero exit code.
+14. THE example tests SHALL include at least three tests for `TRANSFER_REQUEST_WORDING`: an alert containing `Transfer Request Successful` has the flag in `red_flags`; a normal credit alert from a Bank_Sender_Name with a Balance_Line does not have it; and an alert with curly quotes or odd whitespace around a Transfer_Request_Phrase, such as `TRANSFER   request\tSUCCESSFUL`, still has it (Requirement 11).
+15. THE test suite SHALL contain one Hypothesis property test that places a Transfer_Request_Phrase at any position between the lines of Clean_Text and checks that `TRANSFER_REQUEST_WORDING` appears in `red_flags` exactly once and that the other entries of `red_flags` equal those of the Clean_Text without the phrase (Requirement 11).
+
+### Requirement 11: Detect TRANSFER_REQUEST_WORDING
+
+**User Story:** As a shop owner, I want a warning when the message says a transfer was requested and not received, so that I notice a fake receipt that copies a banking app's "request" screen.
+
+#### Acceptance Criteria
+
+1. WHEN Normalised_Text contains a phrase from `TRANSFER_REQUEST_PHRASES` as whole words, THE Alert_Parser SHALL include `TRANSFER_REQUEST_WORDING` in `red_flags` exactly once.
+2. WHEN Normalised_Text contains the whole words `request successful` and the whole word `transfer` Near each other, THE Alert_Parser SHALL include `TRANSFER_REQUEST_WORDING` in `red_flags` exactly once.
+3. WHEN matching Transfer_Request_Phrases, THE Alert_Parser SHALL ignore letter case, treat curly quotes as straight quotes, and treat any run of whitespace as one space.
+4. IF `request successful` and `transfer` appear more than 40 characters apart and no phrase from `TRANSFER_REQUEST_PHRASES` is present, THEN THE Alert_Parser SHALL omit `TRANSFER_REQUEST_WORDING` from `red_flags`.
+5. IF a Transfer_Request_Phrase or either of its words appears only inside a longer word, such as `transferred` or `transfers`, THEN THE Alert_Parser SHALL treat it as no match.
+6. IF Alert_Text is empty or whitespace-only, THEN THE Alert_Parser SHALL omit `TRANSFER_REQUEST_WORDING` from `red_flags` and raise no error.
+7. WHEN Alert_Text contains several Transfer_Request_Phrases, THE Alert_Parser SHALL include `TRANSFER_REQUEST_WORDING` in `red_flags` once and leave the other Red_Flag_Code entries unchanged.
+8. THE Alert_Parser SHALL decide whether `TRANSFER_REQUEST_WORDING` is present from Alert_Text alone, independent of the sender_id.
+9. FOR ALL Clean_Text values and FOR ALL phrases from `TRANSFER_REQUEST_PHRASES`, inserting the phrase between the lines of the Clean_Text SHALL produce a `red_flags` list that holds `TRANSFER_REQUEST_WORDING` exactly once and otherwise equals the `red_flags` of the Clean_Text (property).

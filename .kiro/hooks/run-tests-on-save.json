@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Run tests on save",
+      "description": "Catches a broken test the moment a .py file in src or tests is saved, using a shell command so it costs no credits.",
+      "trigger": "PostFileSave",
+      "matcher": "(^|[\\\\/])(src|tests)[\\\\/].*\\.py$",
+      "action": { "type": "command", "command": "python -m pytest -q" },
+      "timeout": 300,
+      "enabled": true
+    }
+  ]
+}

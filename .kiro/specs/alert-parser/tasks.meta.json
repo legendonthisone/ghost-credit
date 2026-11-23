@@ -31,6 +31,10 @@
     "8.8 Write property test for odd amount formats": {
       "status": "passed",
       "lastRunTimestamp": 1795086325950
+    },
+    "9.3 Write property test for the transfer request phrase": {
+      "status": "passed",
+      "lastRunTimestamp": 1795420720567
     }
   },
   "executionHistory": {
@@ -506,6 +510,46 @@
         "executionId": "f7f0bfe6-5978-4eb0-b5fb-b0a420cb603f",
         "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
         "timestamp": 1795086380401
+      }
+    ],
+    "9. TRANSFER_REQUEST_WORDING": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795419562442
+      },
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795420792054
+      }
+    ],
+    "9.1 Implement the detector, append the code to `RED_FLAG_CODES` and wire it in `parse_sms_alert`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795420789368
+      }
+    ],
+    "9.2 Write example tests for `TRANSFER_REQUEST_WORDING`": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795420790031
+      }
+    ],
+    "9.3 Write property test for the transfer request phrase": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795420790811
+      }
+    ],
+    "9.4 Run the full `pytest` suite and fix failures": [
+      {
+        "executionId": "52232ec7-182c-460f-b24f-dd093d117938",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795420791444
       }
     ]
   }

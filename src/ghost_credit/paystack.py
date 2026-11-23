@@ -2,8 +2,8 @@
 
 ``verify`` is the only place in Ghost Credit that can say CONFIRMED, because
 only Paystack can prove money arrived. It makes at most one read-only call,
-test keys only. This is a different type from the verdict-engine's own
-``PaystackResult``, so import one of them under an alias.
+test keys only. The verdict engine imports this ``PaystackResult`` and
+does not define its own.
 
 A result with ``checked`` False means no Paystack check took place, so the
 verdict mapping must treat it as "no Paystack check".
