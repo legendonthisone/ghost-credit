@@ -173,8 +173,60 @@ Build `src/ghost_credit/paystack.py` in small steps that follow the design's sug
   - [x] 8.2 Checkpoint - Ensure all tests pass
     - Ensure all tests pass with `PATTERN_NETWORK=off`, ask the user if questions arise.
 
+- [x] 9. Already-used payments (addition after the original plan)
+  - This task group is an addition. It also holds the matching changes in `verdict.py` and `pipeline.py`, so one change can be built and tested in one place. The related requirements are verdict-engine Requirement 3.12 and check-pipeline Requirement 10.
+  - [x] 9.1 Implement the already-used rule in `src/ghost_credit/paystack.py`
+    - Add the constant `REASON_ALREADY_USED = "This payment was already used for an earlier check"`
+    - Add the keyword-only parameter `is_used: Callable[[str], bool] | None = None` to `verify`, after `http`
+    - Add `_apply_used_rule(result, is_used)`: with `is_used` None or a non-string `matched_reference`, return the result unchanged; call `is_used(reference)` once inside try/except; exactly `True` gives `NOT_FOUND` checked with `matched_reference` set and the constant reason; exactly `False` returns the result unchanged; a raise or any other value gives `UNAVAILABLE` unchecked with `could not check Paystack`
+    - Pass the `CONFIRMED` result of `_decide_by_reference` and `_decide_by_search` through it. Change nothing else in those functions
+    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10_
+
+  - [x]* 9.2 Write example tests for the already-used rule
+    - A used reference gives `NOT_FOUND`, checked, `matched_reference` set and exactly `This payment was already used for an earlier check`
+    - An unused reference gives `CONFIRMED`. No `is_used` gives `CONFIRMED`
+    - An `is_used` that raises gives `UNAVAILABLE` unchecked with `could not check Paystack`
+    - A used reference on the search path (one matching transaction with a string reference) gives the same `NOT_FOUND` result
+    - Also check that `is_used` is not called for a non-matching response, and that the constant has 50 characters
+    - Put them in `tests/test_example_paystack_used.py`
+    - _Requirements: 10.3, 10.4, 10.5, 10.6, 10.8, 10.10, 10.11_
+
+  - [x]* 9.3 Write property tests for the already-used rule
+    - **Property 16: A used or unverifiable reference is never confirmed**
+    - **Property 17: An unused reference or no ledger changes nothing**
+    - Two Hypothesis tests in `tests/test_prop_paystack_used.py`, one per property (this is the one place where one task holds two properties, to keep the requested task list)
+    - **Validates: Requirements 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.12**
+
+  - [x] 9.4 Change the verdict engine for the already-used reason in `src/ghost_credit/verdict.py`
+    - Import `REASON_ALREADY_USED` from `ghost_credit.paystack`
+    - In `decide`, when the state is `no_match` and `paystack_result.reason` equals `REASON_ALREADY_USED`, use that sentence as the single NOT_FOUND reason instead of `REASON_NOT_FOUND`. The code stays `NOT_FOUND` and `paystack_checked` stays True
+    - Leave `_HEADLINES` unchanged. Its GHOST headline still says "Paystack has no matching payment for this alert", which reads oddly beside the new reason. This is listed under Open Points in the verdict-engine design for the owner to decide
+    - _Requirements: verdict-engine 3.12_
+
+  - [x]* 9.5 Update the verdict tests
+    - Add an example test: a checked `NOT_FOUND` result with the already-used reason gives code `NOT_FOUND` and the reasons list `["This payment was already used for an earlier check"]`; a checked `NOT_FOUND` with any other reason still gives `Paystack found no matching payment.`
+    - Update the reasons-content property test (verdict-engine Property 8) so the NOT_FOUND case accepts either fixed reason, chosen by the Paystack reason
+    - Put the example in `tests/test_verdict_used_reason_examples.py` and edit `tests/test_verdict_prop_08_reasons_content.py`
+    - _Requirements: verdict-engine 3.9, 3.12_
+
+  - [x] 9.6 Wire the used-payment ledger in `src/ghost_credit/pipeline.py`
+    - Add the `UsedReferences` protocol (`is_used(reference) -> bool`, `mark_used(reference) -> None`) and the thread-safe `InMemoryUsedReferences` (a `set` guarded by a `threading.Lock`)
+    - Give `make_paystack_verify` the optional `is_used` and pass it to `verify`
+    - Add the keyword-only `used_references=None` to `run_check`. When given and no `paystack_verify` was injected, build the default callable with `make_paystack_verify(is_used=used_references.is_used)`. An injected `paystack_verify` is used as supplied. After a `CONFIRMED` verdict whose `paystack_result.matched_reference` is a string, call `mark_used` once, swallowing any error and logging only the step name and exception type
+    - Document in the module docstring that `InMemoryUsedReferences` lasts only as long as one process
+    - _Requirements: check-pipeline 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7_
+
+  - [x]* 9.7 Write the pipeline tests for the ledger
+    - Put them in `tests/test_pipeline_used_references_examples.py`: with no ledger, behaviour is unchanged; a first check with a matching payment is `CONFIRMED` and marks the reference once; a second check with the same reference is `NOT_FOUND` with the already-used reason and marks nothing; a `mark_used` that raises leaves the `CONFIRMED` result unchanged; an `is_used` that raises gives `UNAVAILABLE` and a non-CONFIRMED verdict; a non-CONFIRMED verdict never marks; `InMemoryUsedReferences` is safe to use from several threads
+    - _Requirements: check-pipeline 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8_
+
+  - [x] 9.8 Run the full suite
+    - Run the whole test suite with `PATTERN_NETWORK=off` and fix any failure. Ensure all tests pass, ask the user if questions arise.
+    - _Requirements: 8.4, 10.11, 10.12_
+
 ## Notes
 
+- Task 9 is an addition made after tasks 1 to 8 were done. It leaves the earlier tasks unchanged.
 - Tasks marked with `*` are optional test sub-tasks and can be skipped for a faster MVP
 - Each task references specific requirements for traceability
 - Each Hypothesis property is its own sub-task, runs at least 100 examples, and carries the tag **Feature: paystack-verifier, Property N: title**
@@ -192,7 +244,11 @@ Build `src/ghost_credit/paystack.py` in small steps that follow the design's sug
     { "id": 3, "tasks": ["3.2", "3.3", "3.4", "4.1"] },
     { "id": 4, "tasks": ["4.2", "4.3", "5.1"] },
     { "id": 5, "tasks": ["5.2", "5.3", "5.4", "6.1"] },
-    { "id": 6, "tasks": ["6.2", "6.3", "7.1", "7.2", "7.3", "7.4", "7.5", "8.1"] }
+    { "id": 6, "tasks": ["6.2", "6.3", "7.1", "7.2", "7.3", "7.4", "7.5", "8.1"] },
+    { "id": 7, "tasks": ["9.1"] },
+    { "id": 8, "tasks": ["9.2", "9.3", "9.4", "9.6"] },
+    { "id": 9, "tasks": ["9.5", "9.7"] },
+    { "id": 10, "tasks": ["9.8"] }
   ]
 }
 ```

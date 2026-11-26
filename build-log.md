@@ -88,3 +88,23 @@ Credits used today
 
 Next
 - Run the Paystack smoke script, then connect the check pipeline to WhatsApp and The Lab, after approval.
+
+## Day 4, Wed 25 Nov 2026
+
+What I did
+- Fixed a parser bug found on Day 3: an SMS like "Acct:012****789 CR Amt: NGN 45,000.00" was read as NGN 789.00 because the masked account digits sat next to "CR". The parser now ignores account tokens and prefers the number after Amt or Amount, or after a currency marker. It returns NGN 45,000.00. Added an example test and a property test (an account line before the amount never changes the amount).
+- Added the already-used rule: when a Paystack payment exists but was already used for an earlier check, the verdict stays GHOST and the reason reads "This payment was already used for an earlier check". The used-payments list is in memory only, so it lasts as long as one running copy of the app. A durable store needs approval first.
+- Wrote the ai-explainer spec and built BedrockExplainer (Amazon Nova Micro, Converse API, us-east-1, 200 output tokens, 5 second timeout). It only rewrites the reasons into a short reply, never sees the verdict, and falls back to the template text on any error. EXPLAINER=template is the default. Tests use fakes and never call Bedrock.
+- Wrote the whatsapp-webhook spec and built src/ghost_credit/whatsapp.py: GET verification, signature check on every POST, text messages run through the check pipeline, and an image gets a reply asking for the SMS text.
+- Added the Lambda handler, a deploy script (scripts/deploy_lambda.py, with a dry run) and docs/deploy.md. The Lambda role allows only Nova Micro and CloudWatch logs. Secrets go into Lambda environment variables only. I have not run the deploy.
+- 482 tests passing (up from 315 on Day 3).
+
+Kiro features used today
+- Specs: two new specs (ai-explainer, whatsapp-webhook) and additions to the alert-parser, paystack-verifier, verdict-engine and check-pipeline specs. Ran every task, including the optional test tasks.
+- Property-based tests with Hypothesis for every change.
+
+Credits used today
+- 
+
+Next
+- Ayobami approves the cost, then run the deploy dry run and the deploy, and connect the number in Meta.

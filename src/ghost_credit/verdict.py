@@ -18,6 +18,7 @@ from ghost_credit.parser import ParsedAlert
 from ghost_credit.paystack import (
     CONFIRMED as _PAYSTACK_CONFIRMED,
     NOT_FOUND as _PAYSTACK_NOT_FOUND,
+    REASON_ALREADY_USED,
     PaystackResult,
 )
 from ghost_credit.pattern_network import LookupResult, Verdict
@@ -187,7 +188,10 @@ def decide(
         if state == _STATE_CONFIRMED:
             return _make_verdict(CONFIRMED, True, [REASON_CONFIRMED])
         if state == _STATE_NO_MATCH:
-            return _make_verdict(NOT_FOUND, True, [REASON_NOT_FOUND])
+            used = paystack_result.reason == REASON_ALREADY_USED  # type: ignore[union-attr]
+            return _make_verdict(
+                NOT_FOUND, True, [REASON_ALREADY_USED if used else REASON_NOT_FOUND]
+            )
         if flags:
             return _make_verdict(SUSPICIOUS, False, [_flag_reason(f) for f in flags])
         if network:

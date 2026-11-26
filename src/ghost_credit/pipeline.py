@@ -5,6 +5,10 @@ the pattern network, lets the verdict rules decide, writes the reply and
 reports the pattern. This module only wires existing parts together. It holds
 no verdict rules and makes no AI call. Every dependency is passed in, so tests
 use fakes. Nothing here writes to disk or keeps the image bytes.
+
+An optional ``used_references`` ledger stops one real payment from confirming
+two checks. ``InMemoryUsedReferences`` lasts only as long as one process, so a
+restart or a second container starts with an empty ledger.
 """
 
 from __future__ import annotations
@@ -12,10 +16,11 @@ from __future__ import annotations
 import dataclasses
 import logging
 import os
+import threading
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Callable
+from typing import Callable, Protocol
 
 from ghost_credit.parser import RED_FLAG_CODES, ParsedAlert, parse_sms_alert
 from ghost_credit.pattern_network import (
@@ -36,7 +41,14 @@ from ghost_credit.verdict import (
     decide_with_notes,
 )
 
-__all__ = ["CheckResult", "run_check", "merge_alerts", "make_paystack_verify"]
+__all__ = [
+    "CheckResult",
+    "run_check",
+    "merge_alerts",
+    "make_paystack_verify",
+    "UsedReferences",
+    "InMemoryUsedReferences",
+]
 
 FALLBACK_REASON = "The check could not be completed."
 UNAVAILABLE_REASON = "could not check Paystack"
@@ -96,19 +108,65 @@ def _safe_fallback(check_id: str, parsed: ParsedAlert) -> CheckResult:
     )
 
 
-def make_paystack_verify(http: Callable | None = None) -> PaystackCallable:
+class UsedReferences(Protocol):
+    """A ledger of Paystack references that already confirmed a check."""
+
+    def is_used(self, reference: str) -> bool:
+        """Say whether this reference was already used."""
+        ...
+
+    def mark_used(self, reference: str) -> None:
+        """Remember that this reference was used."""
+        ...
+
+
+class InMemoryUsedReferences:
+    """A thread-safe ledger kept in memory. It is lost when the process ends."""
+
+    def __init__(self) -> None:
+        self._used: set[str] = set()
+        self._lock = threading.Lock()
+
+    def is_used(self, reference: str) -> bool:
+        """True only for a reference passed earlier to ``mark_used``."""
+        with self._lock:
+            return reference in self._used
+
+    def mark_used(self, reference: str) -> None:
+        """Remember the reference."""
+        with self._lock:
+            self._used.add(reference)
+
+
+def make_paystack_verify(
+    http: Callable | None = None, is_used: Callable[[str], bool] | None = None
+) -> PaystackCallable:
     """Return a Paystack callable that reads the secret key when it is called.
 
     Why: the key stays inside this closure, so it can never reach a result,
     a log line or an error message. No key means no network call.
+    ``is_used`` is passed on to ``verify`` to refuse a reused payment.
     """
 
     def call(parsed: ParsedAlert, now: datetime) -> PaystackResult:
         """Check one alert against Paystack using the key from the environment."""
         key = os.environ.get("PAYSTACK_SECRET_KEY") or None
-        return verify(parsed, key, now, http=http)
+        return verify(parsed, key, now, http=http, is_used=is_used)
 
     return call
+
+
+def _mark_used(used_references: object, result: CheckResult) -> None:
+    """Record the confirmed payment's reference; drop any ledger error."""
+    reference = result.paystack_result.matched_reference
+    if used_references is None or result.verdict.code != "CONFIRMED":
+        return
+    if not isinstance(reference, str):
+        return
+    try:
+        used_references.mark_used(reference)  # type: ignore[attr-defined]
+    except Exception as exc:  # noqa: BLE001 - a ledger error must not change the result
+        _log_failure("mark_used", exc)
 
 
 def _lagos_iso(now: datetime) -> str:
@@ -291,6 +349,7 @@ def run_check(
     paystack_verify: Callable | None = None,
     network: object = None,
     explainer: object = None,
+    used_references: object = None,
 ) -> CheckResult:
     """Run one whole check and return a CheckResult. It never raises.
 
@@ -302,7 +361,9 @@ def run_check(
     merged: ParsedAlert | None = None
     try:
         reader = FakeScreenshotReader() if reader is None else reader
-        paystack_verify = make_paystack_verify() if paystack_verify is None else paystack_verify
+        if paystack_verify is None:
+            ledger_check = getattr(used_references, "is_used", None)
+            paystack_verify = make_paystack_verify(is_used=ledger_check)
         network = NoopPatternNetwork() if network is None else network
         explainer = TemplateExplainer() if explainer is None else explainer
 
@@ -338,6 +399,7 @@ def run_check(
         _log_failure("run_check", exc)
         return _safe_fallback(check_id, merged if merged is not None else ParsedAlert())
 
+    _mark_used(used_references, result)
     if signals is not None and result.verdict.code != "CONFIRMED":
         _report(network, result.verdict, signals)
     return result

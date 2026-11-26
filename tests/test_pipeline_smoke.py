@@ -46,7 +46,7 @@ def test_run_check_parameter_order() -> None:
     params = list(inspect.signature(pipeline.run_check).parameters.values())
     names = [p.name for p in params]
     assert names == ["text", "sender_id", "image_bytes", "merchant_category", "now",
-                     "reader", "paystack_verify", "network", "explainer"]
+                     "reader", "paystack_verify", "network", "explainer", "used_references"]
     assert all(p.kind is p.KEYWORD_ONLY for p in params[5:])
 
 

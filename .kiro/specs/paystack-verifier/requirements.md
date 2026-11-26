@@ -39,6 +39,10 @@ Out of scope: Paystack live keys, webhooks, writing to Paystack, retries, cachin
 - **Search_Window**: The `from` and `to` times sent to the List_Endpoint.
 - **Matching_Transaction**: A transaction object in a Paystack response whose `status` is `"success"`, whose `currency` is `"NGN"` and whose `amount` is an int (not a bool) equal to `parsed.amount_kobo`.
 - **Fake_Key**: A synthetic key used by tests. Tests and source build it from two pieces, for example `"sk_" + "test_" + "abc"`, so that the full key prefix never appears as one literal.
+- **Is_Used_Function**: An optional callable `is_used(reference: str) -> bool`, passed to Verify_Function through the keyword-only parameter `is_used`. It answers whether a payment reference was already used for an earlier check. It is supplied by the caller. Verify_Function holds no state of its own.
+- **Candidate_Match**: A payment that Verify_Function would return as `CONFIRMED` under Requirements 4 and 5, before the Is_Used_Function is asked.
+- **Match_Reference**: The reference of a Candidate_Match. On the reference path it is `parsed.claimed_reference`. On the search path it is the `reference` of the single Matching_Transaction when that value is a string.
+- **Already_Used_Reason**: The fixed constant `REASON_ALREADY_USED`, equal to `"This payment was already used for an earlier check"` (50 characters).
 
 ## Requirements
 
@@ -165,3 +169,24 @@ Out of scope: Paystack live keys, webhooks, writing to Paystack, retries, cachin
 4. THE Paystack_Verifier SHALL contain no code from Fake Alert Shield, Meko or any other LGND project, and no code from the fake-alert-eval repo.
 5. THE Paystack_Verifier SHALL contain no secret, token or personal data in source, tests or docs, and SHALL read no key itself, because the caller passes the Secret_Key in.
 6. THE Paystack_Verifier SHALL use small functions with type hints and short plain-English docstrings.
+
+### Requirement 10: Refuse a payment that was already used
+
+**User Story:** As a shop owner, I want a real Paystack payment to count for only one check, so that a customer cannot reuse one real payment to collect goods twice.
+
+This requirement is an addition. It overrides Requirements 1.6, 4.4, 5.7 and 7.5 only for the already-used result in criterion 3. In every other case those requirements apply unchanged. The Verify_Function holds no hidden state: the caller supplies the Is_Used_Function.
+
+#### Acceptance Criteria
+
+1. THE Verify_Function SHALL accept the optional keyword-only parameter `is_used: Callable[[str], bool] | None = None`, in addition to the parameters in Requirement 1.2.
+2. WHERE the Is_Used_Function is None, THE Verify_Function SHALL return the same PaystackResult as it returns under Requirements 4 and 5.
+3. WHEN a Candidate_Match has a Match_Reference and the Is_Used_Function returns True for that reference, THE Verify_Function SHALL return `NOT_FOUND` with `checked` True, `matched_reference` equal to the Match_Reference, `amount_kobo` None, `paid_at` None and the Already_Used_Reason as the reason.
+4. WHEN a Candidate_Match has a Match_Reference and the Is_Used_Function returns False for that reference, THE Verify_Function SHALL return the same `CONFIRMED` result as it returns under Requirements 4 and 5.
+5. WHEN the Candidate_Match comes from the search path and the `reference` of the single Matching_Transaction is not a string, THE Verify_Function SHALL return the same `CONFIRMED` result as under Requirement 5 and SHALL not call the Is_Used_Function.
+6. IF the Is_Used_Function raises an exception, or returns a value that is not exactly True or False, THEN THE Verify_Function SHALL return `UNAVAILABLE` with `checked` False and the reason `"could not check Paystack"`, because a ledger that cannot answer must not let a payment be confirmed.
+7. WHEN the Is_Used_Function is given, THE Verify_Function SHALL call it at most once per invocation, only for a Candidate_Match, and SHALL pass it only the Match_Reference.
+8. THE Verify_Function SHALL not call the Is_Used_Function when the result is `UNAVAILABLE`, or `NOT_FOUND` for any reason other than the Already_Used_Reason.
+9. THE Verify_Function SHALL leave the Secret_Key, the exception text and any text from the Is_Used_Function out of the reason and out of every returned value.
+10. THE Paystack_Verifier SHALL define the constant `REASON_ALREADY_USED` with the exact text `"This payment was already used for an earlier check"`, which is at most 120 characters.
+11. THE Paystack_Verifier test suite SHALL include example tests for each of the following: a used reference gives `NOT_FOUND` with the exact Already_Used_Reason, an unused reference gives `CONFIRMED`, no Is_Used_Function gives `CONFIRMED`, an Is_Used_Function that raises gives `UNAVAILABLE`, and a used reference on the search path gives `NOT_FOUND` with the exact Already_Used_Reason.
+12. THE Paystack_Verifier test suite SHALL include a Hypothesis property test that, for any fake matching response on either path and any Is_Used_Function that returns True, raises, or returns a value that is not a bool, the status is not `CONFIRMED`.

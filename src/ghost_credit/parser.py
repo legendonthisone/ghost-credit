@@ -135,12 +135,38 @@ _CR_AMOUNT_RE = re.compile(
 )
 
 
+# A number written right after Amt or Amount with no currency marker.
+_AMOUNT_LABEL_RE = re.compile(
+    r"(?<![A-Za-z])(?:amt|amount)(?![A-Za-z])\s*:?\s*"
+    r"(?P<tok>\d[\d.,]*)(?P<k>[kK](?![A-Za-z]))?",
+    re.IGNORECASE,
+)
+_ACCOUNT_STAR_RE = re.compile(r"\d*\*+\d*")
+_ACCOUNT_LABEL_RE = re.compile(
+    r"(?<![A-Za-z])(?:acct|a/c|account)(?![A-Za-z])\s*:?\s*[\d*]+",
+    re.IGNORECASE,
+)
+
+
+def _find_account_tokens(text: str) -> list[Span]:
+    """Return spans that identify an account and so can never be an amount.
+
+    Covers the masked account, any digits touching ``*``, and an Acct, A/C or
+    Account label with the digits and asterisks after it.
+    """
+    spans = [m.span() for m in _ACCOUNT_RE.finditer(text)]
+    spans += [m.span() for m in _ACCOUNT_STAR_RE.finditer(text) if "*" in m.group(0)]
+    spans += [m.span() for m in _ACCOUNT_LABEL_RE.finditer(text)]
+    return spans
+
+
 @dataclass(frozen=True)
 class _AmountCandidate:
     span: Span
     kobo: int | None
     has_marker: bool
     status: str  # "ok", "odd_format" or "too_many_decimals"
+    preferred: bool = True  # False only for the CR form
 
 
 def _parse_amount_token(number: str, k_suffix: bool = False) -> int | None:
@@ -187,32 +213,42 @@ def _find_amounts(text: str, masked_spans: Iterable[Span]) -> list[_AmountCandid
         kobo, status = _classify_amount(token, m.group("k") is not None)
         candidates.append(_AmountCandidate(m.span(), kobo, True, status))
     marker_spans = [c.span for c in candidates]
-    for m in _CR_AMOUNT_RE.finditer(text):
+    for m in _AMOUNT_LABEL_RE.finditer(text):
         if _overlaps(m.span(), masked) or _overlaps(m.span(), marker_spans):
             continue
         token = m.group("tok").rstrip(".,")
         if not token:
             continue
-        kobo, status = _classify_amount(token, False)
+        kobo, status = _classify_amount(token, m.group("k") is not None)
         candidates.append(_AmountCandidate(m.span(), kobo, False, status))
+    preferred_spans = [c.span for c in candidates]
+    for m in _CR_AMOUNT_RE.finditer(text):
+        if _overlaps(m.span(), masked) or _overlaps(m.span(), preferred_spans):
+            continue
+        token = m.group("tok").rstrip(".,")
+        if not token:
+            continue
+        kobo, status = _classify_amount(token, False)
+        candidates.append(_AmountCandidate(m.span(), kobo, False, status, False))
     candidates.sort(key=lambda c: c.span[0])
     return candidates
 
 
 def _extract_amount(
-    text: str, balance_spans: Iterable[Span]
+    text: str, masked_spans: Iterable[Span]
 ) -> tuple[int | None, str | None, bool]:
     """Return (amount_kobo, currency, any_odd).
 
-    The first candidate outside a Balance_Line decides ``amount_kobo``; an odd
-    first candidate gives None. ``currency`` is ``"NGN"`` only when that
-    candidate had a Currency_Marker. ``any_odd`` is True when any non-balance
-    candidate was odd, which makes the caller flag AMOUNT_FORMAT_ODD.
+    Balance_Line and account spans are ignored. The first marker or Amt/Amount
+    candidate decides ``amount_kobo``; the ``CR`` form decides only when there
+    is none. An odd first choice gives None. ``currency`` is ``"NGN"`` only
+    when that candidate had a Currency_Marker. ``any_odd`` is True when any
+    unmasked candidate was odd, which makes the caller flag AMOUNT_FORMAT_ODD.
     """
-    candidates = _find_amounts(text, balance_spans)
+    candidates = _find_amounts(text, masked_spans)
     if not candidates:
         return None, None, False
-    first = candidates[0]
+    first = next((c for c in candidates if c.preferred), candidates[0])
     amount = first.kobo if first.status == "ok" else None
     currency = "NGN" if first.has_marker else None
     return amount, currency, any(c.status != "ok" for c in candidates)
@@ -536,7 +572,8 @@ def _parse_body(text: str, sender_id: str | None) -> ParsedAlert:
     available_balance_kobo = balances[0][1] if balances else None
     if not balances:
         flags.add("BALANCE_LINE_MISSING")
-    amount_kobo, currency, any_odd = _extract_amount(text, [span for span, _ in balances])
+    amount_masks = [span for span, _ in balances] + _find_account_tokens(text)
+    amount_kobo, currency, any_odd = _extract_amount(text, amount_masks)
     words_kobo = _amount_words_kobo(text)
     if any_odd or (
         words_kobo is not None and amount_kobo is not None and words_kobo != amount_kobo

@@ -1,0 +1,215 @@
+{
+  "pbtResults": {
+    "2.2 Write property test for accepted text in `tests/test_ai_explainer_prop_07_guard_output.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795687271287
+    },
+    "2.3 Write property test for rejected text in `tests/test_ai_explainer_prop_08_guard_rejects.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795687271648
+    },
+    "3.2 Write property test in `tests/test_ai_explainer_prop_01_never_raises.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795687974709
+    },
+    "3.4 Write property test in `tests/test_ai_explainer_prop_03_fallback_exact.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795687975426
+    },
+    "3.5 Write property test in `tests/test_ai_explainer_prop_05_request_settings.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795687976083
+    },
+    "3.6 Write property test in `tests/test_ai_explainer_prop_06_success_layout.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795687976603
+    },
+    "3.3 Write property test in `tests/test_ai_explainer_prop_02_prompt_privacy.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795687981002
+    },
+    "4.2 Write property test in `tests/test_ai_explainer_prop_09_factory.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688074807
+    },
+    "4.3 Write property test in `tests/test_ai_explainer_prop_04_reminder_and_code.py`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688079333
+    }
+  },
+  "executionHistory": {
+    "1. Create the module skeleton, prompt sanitiser, packaging and test helpers": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795686837303
+      },
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688152593
+      }
+    ],
+    "1.1 Create `src/ghost_credit/ai_explainer.py` with constants, the fixed instruction and the Prompt_Sanitiser": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688151697
+      }
+    ],
+    "1.2 Add the `aws` optional dependency and the env example line": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688152040
+      }
+    ],
+    "1.3 Create shared test helpers in `tests/ai_explainer_helpers.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688152357
+      }
+    ],
+    "1.4 Write example and smoke tests for the sanitiser and packaging in `tests/test_ai_explainer_sanitiser_examples.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688152998
+      }
+    ],
+    "2.1 Add `_clean_text`, `_contradicts` and `guard_output` to `ai_explainer.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688153647
+      }
+    ],
+    "2. Implement the Output_Guard": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688153729
+      }
+    ],
+    "2.2 Write property test for accepted text in `tests/test_ai_explainer_prop_07_guard_output.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688154404
+      }
+    ],
+    "2.3 Write property test for rejected text in `tests/test_ai_explainer_prop_08_guard_rejects.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688155234
+      }
+    ],
+    "2.4 Write example tests for the guard in `tests/test_ai_explainer_guard_examples.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688155980
+      }
+    ],
+    "3.1 Add the `BedrockExplainer` class to `ai_explainer.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688156933
+      }
+    ],
+    "3. Implement BedrockExplainer": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688157014
+      }
+    ],
+    "3.2 Write property test in `tests/test_ai_explainer_prop_01_never_raises.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688157611
+      }
+    ],
+    "3.3 Write property test in `tests/test_ai_explainer_prop_02_prompt_privacy.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688158378
+      }
+    ],
+    "3.4 Write property test in `tests/test_ai_explainer_prop_03_fallback_exact.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688159335
+      }
+    ],
+    "3.5 Write property test in `tests/test_ai_explainer_prop_05_request_settings.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688159962
+      }
+    ],
+    "3.6 Write property test in `tests/test_ai_explainer_prop_06_success_layout.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688160953
+      }
+    ],
+    "3.7 Write example tests for BedrockExplainer in `tests/test_ai_explainer_examples.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688161591
+      }
+    ],
+    "4.1 Add `get_explainer(env=None, client=None)` to `ai_explainer.py` and export the public names": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688162421
+      }
+    ],
+    "4. Add the factory and check the reply wiring": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688162527
+      }
+    ],
+    "4.2 Write property test in `tests/test_ai_explainer_prop_09_factory.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688163243
+      }
+    ],
+    "4.3 Write property test in `tests/test_ai_explainer_prop_04_reminder_and_code.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688164000
+      }
+    ],
+    "4.4 Write example tests for the env switch in `tests/test_ai_explainer_factory_examples.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688164958
+      }
+    ],
+    "5. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688166080
+      }
+    ]
+  }
+}

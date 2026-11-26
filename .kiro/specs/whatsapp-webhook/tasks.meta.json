@@ -1,0 +1,346 @@
+{
+  "pbtResults": {
+    "2.4 Write property test for unproven requests": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688699910
+    },
+    "2.5 Write property test for GET verification": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688699992
+    },
+    "2.6 Write property test for the Seen_Set bound": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688700499
+    },
+    "2.3 Write property test for totality": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688704783
+    },
+    "3.2 Write property test for a signed text message": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688923079
+    },
+    "3.3 Write property test for long text": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688926706
+    },
+    "3.4 Write property test for non-text messages": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688929879
+    },
+    "3.5 Write property test for dedupe": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688933213
+    },
+    "3.6 Write property test for failure isolation": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688936640
+    },
+    "3.7 Write property test for privacy": {
+      "status": "passed",
+      "lastRunTimestamp": 1795688939828
+    },
+    "5.3 Write property test for adapter totality": {
+      "status": "passed",
+      "lastRunTimestamp": 1795689209371
+    },
+    "5.2 Write property test for body decoding": {
+      "status": "passed",
+      "lastRunTimestamp": 1795689212720
+    },
+    "6.2 Write property test for env parsing": {
+      "status": "passed",
+      "lastRunTimestamp": 1795689450179
+    },
+    "6.3 Write property test for variable selection": {
+      "status": "passed",
+      "lastRunTimestamp": 1795689451116
+    },
+    "6.4 Write property test for hidden values": {
+      "status": "passed",
+      "lastRunTimestamp": 1795689451482
+    },
+    "6.5 Write property test for the test-key gate": {
+      "status": "passed",
+      "lastRunTimestamp": 1795689452048
+    }
+  },
+  "executionHistory": {
+    "1. Make the image libraries lazy in `screenshot.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795688166190
+      },
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689021439
+      }
+    ],
+    "1.1 Move the `PIL` and `imagehash` imports into `_compute_phash`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689021362
+      }
+    ],
+    "1.2 Write example tests for the lazy imports": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689021757
+      }
+    ],
+    "2.1 Create `src/ghost_credit/whatsapp.py` with constants, types, the gate and totality": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689022072
+      }
+    ],
+    "2. Webhook request gate in `whatsapp.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689022262
+      }
+    ],
+    "2.2 Create the shared test helpers in `tests/whatsapp_fakes.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689022563
+      }
+    ],
+    "2.3 Write property test for totality": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689022933
+      }
+    ],
+    "2.4 Write property test for unproven requests": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689023311
+      }
+    ],
+    "2.5 Write property test for GET verification": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689024096
+      }
+    ],
+    "2.6 Write property test for the Seen_Set bound": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689025017
+      }
+    ],
+    "2.7 Write example tests for the gate": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689025502
+      }
+    ],
+    "3.1 Add payload parsing, the check, the reply and dedupe to `whatsapp.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689026672
+      }
+    ],
+    "3. Message processing in `whatsapp.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689026792
+      }
+    ],
+    "3.2 Write property test for a signed text message": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689027181
+      }
+    ],
+    "3.3 Write property test for long text": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689028045
+      }
+    ],
+    "3.4 Write property test for non-text messages": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689028704
+      }
+    ],
+    "3.5 Write property test for dedupe": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689029425
+      }
+    ],
+    "3.6 Write property test for failure isolation": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689030355
+      }
+    ],
+    "3.7 Write property test for privacy": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689030865
+      }
+    ],
+    "3.8 Write example tests for recorded payloads and wiring": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689031745
+      }
+    ],
+    "3.9 Write smoke checks for `whatsapp.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689032456
+      }
+    ],
+    "4. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689033348
+      }
+    ],
+    "5. Lambda adapter": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689033860
+      },
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689616826
+      }
+    ],
+    "5.1 Create `src/ghost_credit/lambda_handler.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689616721
+      }
+    ],
+    "5.2 Write property test for body decoding": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689617057
+      }
+    ],
+    "5.3 Write property test for adapter totality": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689617251
+      }
+    ],
+    "5.4 Write example tests for the Lambda adapter": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689617722
+      }
+    ],
+    "6.1 Create `scripts/deploy_lambda.py` and `tests/deploy_helpers.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689618422
+      }
+    ],
+    "6. Deploy script": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689618505
+      }
+    ],
+    "6.2 Write property test for env parsing": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689619378
+      }
+    ],
+    "6.3 Write property test for variable selection": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689620078
+      }
+    ],
+    "6.4 Write property test for hidden values": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689620686
+      }
+    ],
+    "6.5 Write property test for the test-key gate": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689621388
+      }
+    ],
+    "6.6 Write example tests and smoke checks for the script": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689622144
+      }
+    ],
+    "7.1 Write `docs/deploy.md` and update `.env.example`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689623032
+      }
+    ],
+    "7. Deploy guide and `.env.example`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689623114
+      }
+    ],
+    "7.2 Write a smoke check for the guide and the example file": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689623777
+      }
+    ],
+    "8. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795689624727
+      }
+    ]
+  }
+}

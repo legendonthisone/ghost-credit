@@ -31,6 +31,10 @@
     "6.2 Write property test for the search outcome": {
       "status": "passed",
       "lastRunTimestamp": 1795180893580
+    },
+    "9.3 Write property tests for the already-used rule": {
+      "status": "passed",
+      "lastRunTimestamp": 1795686794004
     }
   },
   "executionHistory": {
@@ -344,6 +348,74 @@
         "executionId": "b9d1085b-f98f-439e-87b5-a8537a2be6b2",
         "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
         "timestamp": 1795181864822
+      }
+    ],
+    "9. Already-used payments (addition after the original plan)": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795686099424
+      },
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795686823702
+      }
+    ],
+    "9.1 Implement the already-used rule in `src/ghost_credit/paystack.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795686819685
+      }
+    ],
+    "9.2 Write example tests for the already-used rule": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795686820259
+      }
+    ],
+    "9.3 Write property tests for the already-used rule": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795686821014
+      }
+    ],
+    "9.4 Change the verdict engine for the already-used reason in `src/ghost_credit/verdict.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795686821487
+      }
+    ],
+    "9.5 Update the verdict tests": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795686822013
+      }
+    ],
+    "9.6 Wire the used-payment ledger in `src/ghost_credit/pipeline.py`": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795686822484
+      }
+    ],
+    "9.7 Write the pipeline tests for the ledger": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795686822940
+      }
+    ],
+    "9.8 Run the full suite": [
+      {
+        "executionId": "48a10913-3148-4909-b86c-40bcbd68a0a5",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795686823493
       }
     ]
   }

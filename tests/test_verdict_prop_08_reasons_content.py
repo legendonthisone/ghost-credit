@@ -7,6 +7,7 @@ from datetime import datetime
 from hypothesis import given, settings, strategies as st
 
 from ghost_credit.parser import ParsedAlert
+from ghost_credit.paystack import REASON_ALREADY_USED
 from ghost_credit.verdict import FLAG_REASONS, decide, risk_notes
 from verdict_helpers import (
     KNOWN_FLAGS,
@@ -36,7 +37,10 @@ def test_reasons_match_verdict(flags, paystack, lookup, amount, when, text) -> N
     if v.code == "CONFIRMED":
         assert v.reasons == ["Paystack found a matching payment."]
     elif v.code == "NOT_FOUND":
-        assert v.reasons == ["Paystack found no matching payment."]
+        if paystack.reason == REASON_ALREADY_USED:
+            assert v.reasons == [REASON_ALREADY_USED]
+        else:
+            assert v.reasons == ["Paystack found no matching payment."]
     elif flags:
         expected = [
             FLAG_REASONS[f] if isinstance(f, str) and f in FLAG_REASONS else _GENERIC

@@ -170,6 +170,7 @@ Each correctness property has its own test file, named `tests/test_pipeline_prop
 
 ## Notes
 
+- Requirement 10 (used payments, the `used_references` ledger and `InMemoryUsedReferences`) is an addition. Its tasks are 9.6 (implementation in `pipeline.py`) and 9.7 (tests) in `.kiro/specs/paystack-verifier/tasks.md`, because they depend on `paystack.py` task 9.1. No task is added here.
 - Tasks marked with `*` are optional and can be skipped for a faster MVP. The user asked for every test sub-task to be listed, so each test file is its own sub-task.
 - Each task references specific requirements for traceability.
 - Property tests use Hypothesis with at least 100 examples and carry the tag comment `Feature: check-pipeline, Property N: <property text>`.

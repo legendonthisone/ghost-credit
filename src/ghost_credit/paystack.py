@@ -39,6 +39,7 @@ REASON_MANY = "more than one payment of this amount, check manually"
 REASON_MATCH = "Paystack has a matching payment"
 REASON_INTERNAL = "could not check Paystack"
 REASON_NO_SUCH_REFERENCE = "Paystack has no payment with this reference"
+REASON_ALREADY_USED = "This payment was already used for an earlier check"
 
 # Built from two pieces so the full prefix never appears as one literal.
 _TEST_KEY_PREFIX = "sk_" + "test_"
@@ -229,14 +230,41 @@ def _is_reference_not_found(status_code: int, body: object) -> bool:
             or (isinstance(message, str) and "not found" in message.lower()))
 
 
-def _decide_by_reference(data: dict, claimed_reference: str, amount: int) -> PaystackResult:
+def _apply_used_rule(result: PaystackResult,
+                     is_used: Callable[[str], bool] | None) -> PaystackResult:
+    """Turn a CONFIRMED result into NOT_FOUND if its payment was already used.
+
+    Without a ledger, or without a string reference, nothing changes. If the
+    ledger raises or gives a non-bool answer, the result is UNAVAILABLE so a
+    payment is never confirmed by a ledger that cannot answer.
+    """
+    reference = result.matched_reference
+    if is_used is None or not isinstance(reference, str):
+        return result
+    try:
+        used = is_used(reference)
+    except Exception:
+        return _unavailable(REASON_INTERNAL)
+    if used is True:
+        return PaystackResult(NOT_FOUND, True, reference, None, None,
+                              REASON_ALREADY_USED)
+    if used is False:
+        return result
+    return _unavailable(REASON_INTERNAL)
+
+
+def _decide_by_reference(data: dict, claimed_reference: str, amount: int,
+                         is_used: Callable[[str], bool] | None = None) -> PaystackResult:
     """Decide from a verify reply: CONFIRMED if it matches, else NOT_FOUND (checked)."""
     if not _is_match(data, amount):
         return _not_found(REASON_NO_MATCH, True)
-    return _confirmed(claimed_reference, amount, _parse_paid_at(data.get("paid_at")))
+    return _apply_used_rule(
+        _confirmed(claimed_reference, amount, _parse_paid_at(data.get("paid_at"))),
+        is_used)
 
 
-def _decide_by_search(items: list, amount: int) -> PaystackResult:
+def _decide_by_search(items: list, amount: int,
+                      is_used: Callable[[str], bool] | None = None) -> PaystackResult:
     """Decide from a list reply: CONFIRMED only for exactly one match on a short page.
 
     Non-object items are skipped. A full page (100) with a match is not trusted
@@ -249,12 +277,15 @@ def _decide_by_search(items: list, amount: int) -> PaystackResult:
         return _not_found(REASON_MANY, True)
     match = matches[0]
     reference = match.get("reference")
-    return _confirmed(reference if isinstance(reference, str) else None,
-                      amount, _parse_paid_at(match.get("paid_at")))
+    return _apply_used_rule(
+        _confirmed(reference if isinstance(reference, str) else None,
+                   amount, _parse_paid_at(match.get("paid_at"))),
+        is_used)
 
 
 def verify(parsed: ParsedAlert, secret_key: str | None, now: datetime,
-           *, http: HttpFunction | None = None) -> PaystackResult:
+           *, http: HttpFunction | None = None,
+           is_used: Callable[[str], bool] | None = None) -> PaystackResult:
     """Check the alert against Paystack and return a result. Never raises.
 
     The key is checked before any field of ``parsed`` is read, so a bad key
@@ -292,7 +323,7 @@ def verify(parsed: ParsedAlert, secret_key: str | None, now: datetime,
         if parsed_body is None or not isinstance(parsed_body.get("data"), expected):
             return _unavailable(REASON_BAD_REPLY)
         if reference is not None:
-            return _decide_by_reference(parsed_body["data"], reference, amount)
-        return _decide_by_search(parsed_body["data"], amount)
+            return _decide_by_reference(parsed_body["data"], reference, amount, is_used)
+        return _decide_by_search(parsed_body["data"], amount, is_used)
     except Exception:
         return _unavailable(REASON_INTERNAL)

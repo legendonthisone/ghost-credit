@@ -271,6 +271,34 @@ The module logs through `logging.getLogger("ghost_credit.pipeline")`. The only h
 
 Money is an integer in kobo everywhere. The pipeline does no arithmetic on money (Requirement 8.5).
 
+## Used-payment ledger (addition, Requirement 10)
+
+One real payment must confirm only one check. The decision is made inside `paystack.verify` (see the paystack-verifier design). The pipeline only supplies the ledger and records a confirmed reference.
+
+```python
+class UsedReferences(Protocol):
+    def is_used(self, reference: str) -> bool: ...
+    def mark_used(self, reference: str) -> None: ...
+
+class InMemoryUsedReferences:
+    """A set of used references guarded by a threading.Lock."""
+
+run_check(..., explainer=None, used_references=None)   # new keyword-only parameter, last
+make_paystack_verify(http=None, *, is_used=None)       # new optional parameter, passed to verify
+```
+
+Flow:
+1. `used_references` None: nothing changes.
+2. `used_references` given and `paystack_verify` not supplied: `run_check` builds the default callable with `make_paystack_verify(is_used=used_references.is_used)`. An injected `paystack_verify` is used as supplied and owns its own ledger wiring.
+3. `verify` returns `NOT_FOUND` with the already-used reason for a used reference, or `UNAVAILABLE` when `is_used` fails. The pipeline passes either result on unchanged. The verdict engine turns the first into `NOT_FOUND` with the same sentence, and the second into a non-CONFIRMED verdict.
+4. After the reply is built, and only when the verdict code is `CONFIRMED` and `paystack_result.matched_reference` is a string, `run_check` calls `mark_used(reference)` once inside its own try/except. A failure is logged as step name `mark_used` and the exception type, and the finished result is returned unchanged. The call sits before the report step and after `build_reply`.
+
+Limits, stated plainly:
+- `InMemoryUsedReferences` lasts only as long as one process. In a serverless container it is empty after a restart and is not shared between containers, so a payment can be used again once per fresh container. It is a stop-gap for the demo, not a guarantee.
+- A durable store (for example DynamoDB) needs Ayobami's approval, a quoted cost and IAM changes. It is out of scope here. A later store only has to implement the two methods of `UsedReferences`.
+- Check and mark are two separate steps. Two checks of the same payment at the same moment could both pass `is_used` before either calls `mark_used`. Closing that gap needs an atomic "mark if unused" call on a durable store, which is also out of scope.
+- A confirmed alert checked a second time by the same owner, for example to look again, gets `NOT_FOUND` with the already-used reason. This is intended, and it is the owner's cue to check the bank app.
+
 ## Correctness Properties
 
 *A property is a characteristic or behavior that should hold true across all valid executions of a system-essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
@@ -362,6 +390,8 @@ For any inputs where the merged alert has no integer `amount_kobo`, `run_check` 
 | `safe_report` raises | The error is discarded. The finished result is returned (Requirement 6.5). |
 | Explainer raises or returns bad text | Handled inside `build_reply`, which falls back to the reasons and still enforces the Check_Reminder. |
 | Any other exception | Safe_Fallback_Result with the Merged_Alert if it exists, else an empty `ParsedAlert` (Requirements 7.2, 7.5). |
+| `used_references.is_used` raises (inside `verify`) | `verify` returns UNAVAILABLE. The check continues and the verdict is not CONFIRMED (Requirement 10.3). |
+| `used_references.mark_used` raises | The error is discarded and logged by step name and exception type. The CONFIRMED result is returned unchanged (Requirement 10.5). |
 
 The Safe_Fallback_Result never says money arrived (UNVERIFIED, `paystack_checked` False). It has the reply `The check could not be completed. Check your own bank app before releasing goods.`
 

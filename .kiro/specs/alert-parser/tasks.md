@@ -177,6 +177,30 @@ Implement `parse_sms_alert(text, sender_id) -> ParsedAlert` in `src/ghost_credit
     - Ensure all tests pass, ask the user if questions arise.
     - _Requirements: 10.12, 10.13_
 
+- [x] 10. Amount ignores account tokens
+  - [x] 10.1 Implement account-token masking and amount ranking in `src/ghost_credit/parser.py`
+    - Add `_find_account_tokens(text)` returning Account_Token spans: `_ACCOUNT_RE` matches, digit runs adjacent to `*` (with the asterisks), and an `Acct`, `A/C` or `Account` label (case-insensitive, optional colon and whitespace) with the digit and asterisk run after it
+    - In `_parse_body`, pass the Balance_Line spans plus the Account_Token spans to `_extract_amount` as one `masked_spans` list (rename the `balance_spans` parameter)
+    - Add `_AMOUNT_LABEL_RE` for a number after `Amt` or `Amount` with no Currency_Marker, as a candidate with `has_marker` False, dropped when it overlaps a marker candidate
+    - In `_extract_amount`, let the first marker or label candidate decide `amount_kobo`, and use the CR-form candidate only when there is none
+    - Leave `account_masked`, the date masks, kobo integer arithmetic and the odd-format rules unchanged
+    - _Requirements: 2.11, 2.12, 2.13, 2.14, 2.15, 2.16_
+
+  - [x]* 10.2 Write example test for the account-token bug
+    - File `tests/test_example_account_token.py`: `parse_sms_alert("Acct:012****789 CR Amt: NGN 45,000.00", "GTBank")` gives `amount_kobo == 4500000`
+    - _Requirements: 2.12, 10.16_
+
+  - [x]* 10.3 Write property test for account line before the amount
+    - File `tests/test_prop_account_token.py`, `@settings(max_examples=200)`, comment `# Feature: alert-parser, Property 10: Account line never changes the amount`
+    - Generate an account line (`Acct`, `A/C` or `Account` label in random case, optional colon, any digits around 1 to 6 asterisks) and an amount line, put the account line first, and assert `amount_kobo` equals that of the amount text alone
+    - **Property 10: Account line never changes the amount**
+    - **Validates: Requirements 2.11, 2.14, 2.15, 10.17**
+
+  - [x] 10.4 Run the full `pytest` suite and fix failures
+    - Run a single `pytest` execution from the project root with `PATTERN_NETWORK=off` and no network, and confirm all earlier tests still pass
+    - Ensure all tests pass, ask the user if questions arise.
+    - _Requirements: 2.16, 10.12, 10.13_
+
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for a faster MVP. Requirement 10 expects all 5 example tests and all 8 property tests to exist, so skip them only deliberately.
@@ -184,6 +208,7 @@ Implement `parse_sms_alert(text, sender_id) -> ParsedAlert` in `src/ghost_credit
 - The 10,000-character timing limit (Requirement 9.6) and bank matching (Requirement 3.6) have no automated test. The design uses bounded regexes with no nested quantifiers.
 - All parser tasks edit `src/ghost_credit/parser.py`, so they run in separate waves.
 - Task 9 is an addition made after the original build. The earlier limit of 8 tasks applied to the original build only.
+- Task 10 is an addition (a bug fix for amounts read from account numbers). It keeps tasks 1 to 9 and their numbers unchanged.
 
 ## Task Dependency Graph
 
@@ -204,7 +229,10 @@ Implement `parse_sms_alert(text, sender_id) -> ParsedAlert` in `src/ghost_credit
     { "id": 11, "tasks": ["8.9"] },
     { "id": 12, "tasks": ["9.1"] },
     { "id": 13, "tasks": ["9.2", "9.3"] },
-    { "id": 14, "tasks": ["9.4"] }
+    { "id": 14, "tasks": ["9.4"] },
+    { "id": 15, "tasks": ["10.1"] },
+    { "id": 16, "tasks": ["10.2", "10.3"] },
+    { "id": 17, "tasks": ["10.4"] }
   ]
 }
 ```

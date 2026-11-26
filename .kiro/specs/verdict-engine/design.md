@@ -102,6 +102,10 @@ Notes on the table:
 - `paystack.py` builds every real CONFIRMED result with `checked` True. The mapping reads only `status` for CONFIRMED, as Requirement Glossary says, so a hand-built CONFIRMED with `checked` False would still map to CONFIRMED. This matches the requirement and is covered by an example test.
 - `paystack.py` returns NOT_FOUND with `checked` True when it finds more than one payment of the same amount ("more than one payment of this amount, check manually"). The mapping gives NOT_FOUND (GHOST) for that case, as the requirements say. It is listed under Open Points because the owner reply may deserve a softer line later.
 
+### Already-used payment reason (addition, Requirement 3.12)
+
+`paystack.py` returns `NOT_FOUND` with `checked` True and the reason `REASON_ALREADY_USED` when a matching payment was already used for an earlier check. The mapping does not change: this is still `no_match`, so the code is `NOT_FOUND` (GHOST) and `paystack_checked` is True. Only the reason changes. A small private helper `_no_match_reason(paystack_result)` returns `REASON_ALREADY_USED` when `paystack_result.reason == REASON_ALREADY_USED`, and `REASON_NOT_FOUND` otherwise. `decide` uses it for the `no_match` branch. The constant is imported from `ghost_credit.paystack`, not retyped. It is 50 characters, so `_cut` leaves it whole. The engine reads no other Paystack text, because every other reason in `paystack.py` is a fixed string the owner never sees.
+
 ### Helpers
 
 | Helper | Returns | Rule |
@@ -128,6 +132,7 @@ decide(parsed, paystack_result, lookup_result) -> Verdict
 |---|---|
 | CONFIRMED | "Paystack found a matching payment." |
 | NOT_FOUND | "Paystack found no matching payment." |
+| NOT_FOUND, payment already used (Requirement 3.12) | "This payment was already used for an earlier check" (the constant `REASON_ALREADY_USED`, imported from `ghost_credit.paystack`) |
 | SUSPICIOUS, red flags | One reason per entry of `red_flags`, in list order, from the flag sentence table below |
 | SUSPICIOUS, network | "The pattern network has seen a similar alert." |
 | UNVERIFIED | "No Paystack check was possible and no red flags were found." |
@@ -326,9 +331,9 @@ For any `red_flags` list, including unknown codes, non-string entries and very l
 
 ### Property 8: Reasons explain the verdict and hold no notes
 
-For any inputs, the reasons match the verdict. A flag-based SUSPICIOUS verdict has one reason per entry of `red_flags`, in order, each taken from the flag sentence table and containing no Red_Flag_Code. A network-based SUSPICIOUS verdict has the reason that the pattern network has seen a similar alert. CONFIRMED, NOT_FOUND and UNVERIFIED each have their fixed reason. No Risk_Note text appears in `reasons`, whatever `alert_text`, `alert_time` and amount are.
+For any inputs, the reasons match the verdict. A flag-based SUSPICIOUS verdict has one reason per entry of `red_flags`, in order, each taken from the flag sentence table and containing no Red_Flag_Code. A network-based SUSPICIOUS verdict has the reason that the pattern network has seen a similar alert. CONFIRMED, NOT_FOUND and UNVERIFIED each have their fixed reason, except that a NOT_FOUND from a Paystack result whose reason is `REASON_ALREADY_USED` has that sentence as its reason. No Risk_Note text appears in `reasons`, whatever `alert_text`, `alert_time` and amount are.
 
-**Validates: Requirements 3.6, 3.7, 3.8, 3.9, 3.10, 3.11**
+**Validates: Requirements 3.6, 3.7, 3.8, 3.9, 3.10, 3.11, 3.12**
 
 ### Property 9: Decide is deterministic and leaves arguments unchanged
 
@@ -479,4 +484,5 @@ Smoke checks:
 - **Ambiguous Paystack matches.** `paystack.py` returns NOT_FOUND with `checked` True when several payments of the same amount exist. The mapping then gives NOT_FOUND (GHOST), as the requirements state. The reason "Paystack found no matching payment." is slightly off for that case.
 - **Reminder from two places.** Requirement 6.5 has TemplateExplainer write the Check_Reminder and Requirement 7.1 says no Explainer carries the duty. The design satisfies both: the template writes it and Reply_Builder never doubles it.
 - **Duplicate flags.** Requirement 3.6 says one reason for each entry, so a duplicate entry in `red_flags` gives a duplicate reason. The parser never produces duplicates.
+- **GHOST headline for an already-used payment.** `TemplateExplainer` still opens a NOT_FOUND reply with "Paystack has no matching payment for this alert." Beside the reason "This payment was already used for an earlier check" this reads oddly. Changing the headline is not part of Requirement 3.12, so it is left for the owner to decide.
 - **Old `tasks.md`.** `.kiro/specs/verdict-engine/tasks.md` was not touched and may still describe the old design.

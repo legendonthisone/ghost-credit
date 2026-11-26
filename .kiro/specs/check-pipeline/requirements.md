@@ -44,6 +44,9 @@ Out of scope: any AI model or vision reader, HTTP routes, WhatsApp or SMS delive
 - **Fallback_Reason**: The fixed sentence `The check could not be completed.`
 - **Secret_Key**: The Paystack secret key read from the environment variable `PAYSTACK_SECRET_KEY`.
 - **Kobo**: The integer money unit. NGN 45,000 equals 4500000 kobo.
+- **Used_References**: A ledger object with two methods: `is_used(reference: str) -> bool` and `mark_used(reference: str) -> None`. It records which Paystack payment references were already used for an earlier check. It is passed to Run_Check as the optional keyword-only parameter `used_references`.
+- **InMemoryUsedReferences**: The small Used_References implementation in `pipeline.py`. It keeps the references in a set guarded by a lock. It lasts only as long as one process (for example one serverless container) and is empty again when the process restarts.
+- **Already_Used_Reason**: The constant `REASON_ALREADY_USED` of `src/ghost_credit/paystack.py`, equal to `"This payment was already used for an earlier check"`.
 
 ## Requirements
 
@@ -189,3 +192,22 @@ Out of scope: any AI model or vision reader, HTTP routes, WhatsApp or SMS delive
 9. THE Check_Pipeline test suite SHALL include example tests for the Safe_Fallback_Result (an injected dependency that raises), for the case with no usable text and no usable image, for an unreadable screenshot, for a Paystack_Callable that raises (giving the Unavailable_Paystack_Result and a continued check), for an UNAVAILABLE Paystack_Result passed on unchanged, for `risk_notes` filled from a Friday-afternoon alert and from an `alert_text` mentioning a rider, for red flags SCREENSHOT_EDIT_SIGNS and TRANSFER_REQUEST_WORDING surviving the merge, and for `make_paystack_verify` reading `PAYSTACK_SECRET_KEY` with a fake `http` function and no real key.
 10. THE Check_Pipeline test suite SHALL include an example test that the Secret_Key does not appear in the Check_Result, in captured log output or in an error message.
 11. THE Check_Pipeline test suite SHALL use synthetic data only, with no real customer data, no real key and no personal email address.
+
+### Requirement 10: Count a payment once
+
+**User Story:** As a shop owner, I want one real Paystack payment to confirm only one check, so that a customer cannot reuse one payment to collect goods twice.
+
+This requirement is an addition. It adds one optional keyword-only parameter after those listed in Requirement 1.1. A durable store for Used_References (for example a DynamoDB table) is out of scope: it needs approval and IAM changes first.
+
+#### Acceptance Criteria
+
+1. THE Run_Check SHALL accept the optional keyword-only parameter `used_references`, after `explainer`, with the default None.
+2. WHERE `used_references` is None, THE Run_Check SHALL behave exactly as it does under Requirements 1 to 9 and SHALL make no ledger call.
+3. WHERE `used_references` is given and no `paystack_verify` is supplied, THE Run_Check SHALL build the default Paystack_Callable so that it passes `used_references.is_used` to `paystack.verify`.
+4. WHEN `used_references` is given and the Verdict code is `CONFIRMED` and `paystack_result.matched_reference` is a string, THE Run_Check SHALL call `used_references.mark_used(paystack_result.matched_reference)` once, after the reply has been built.
+5. IF `used_references.mark_used` raises an error, THEN THE Run_Check SHALL discard the error, log only the step name and the exception type name, and return the Check_Result unchanged.
+6. WHEN the Verdict code is not `CONFIRMED`, or `matched_reference` is not a string, or the Run_Check returns the Safe_Fallback_Result, THE Run_Check SHALL make no `mark_used` call.
+7. WHEN the Paystack_Result is `NOT_FOUND` with the Already_Used_Reason, THE Run_Check SHALL pass it on unchanged, so that the Verdict code is `NOT_FOUND`, and SHALL make no `mark_used` call.
+8. THE Check_Pipeline SHALL provide InMemoryUsedReferences, whose `is_used` returns True for exactly the references passed earlier to `mark_used`, and whose methods are safe to call from several threads at once.
+9. THE Check_Pipeline SHALL document that InMemoryUsedReferences lasts only as long as one process, so that a restart or a second container starts with an empty ledger.
+10. THE Check_Pipeline test suite SHALL include example tests for each of the following: no ledger leaves behaviour unchanged, a first matching payment gives `CONFIRMED` and one `mark_used` call, a second check with the same reference gives `NOT_FOUND` with the Already_Used_Reason and no `mark_used` call, a `mark_used` that raises leaves the `CONFIRMED` result unchanged, an `is_used` that raises gives a Verdict code other than `CONFIRMED`, and InMemoryUsedReferences used from several threads.

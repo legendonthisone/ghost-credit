@@ -13,6 +13,10 @@ Out of scope: SCREENSHOT_EDIT_SIGNS (needs an image), detection of future dates 
 - **ParsedAlert**: The dataclass returned by Alert_Parser, with the fields `amount_kobo`, `currency`, `claimed_bank`, `sender_id`, `account_masked`, `narration`, `alert_time`, `available_balance_kobo`, `claimed_reference` and `red_flags`. A field with no value in the input holds Python `None`, except `red_flags`, which holds an empty list.
 - **Kobo**: The smallest Naira unit. 1 Naira equals 100 kobo.
 - **Supported_Amount_Format**: One of these ways of writing an amount: a currency marker (`N`, `₦` or `NGN`, with or without a space) followed by a number such as `N50,000.00`, `NGN50,000` or `NGN 50k`; or a number followed by a credit marker such as `50,000.00 CR`. A number may use comma thousands separators, a decimal part of one or two digits, or a `k` suffix meaning thousands.
+- **Account_Label**: The text `Acct`, `A/C` or `Account` in any letter case, as a whole word, optionally followed by a colon and whitespace.
+- **Account_Token**: A span of Alert_Text that identifies an account and never an amount. It is any of: the masked account (3 to 4 digits, 1 to 6 asterisks, 3 to 4 digits); any run of digits directly adjacent to one or more `*` characters, together with those asterisks; or an Account_Label together with the run of digits and asterisks that follows it.
+- **Amount_Label**: The text `Amt` or `Amount` in any letter case, as a whole word, optionally followed by a colon and whitespace.
+- **Preferred_Amount**: A number written after a Currency_Marker, or written directly after an Amount_Label with or without a Currency_Marker between them.
 - **Currency_Marker**: The text `N`, `₦` or `NGN` that appears directly before an amount, with or without a space.
 - **Phone_Number_Sender**: A sender_id made only of digits, spaces, hyphens and an optional leading `+`, with 7 to 15 digits in total.
 - **Bank_Sender_Name**: A sender_id that contains at least one letter, such as a bank's alphabetic sender header.
@@ -63,6 +67,12 @@ Out of scope: SCREENSHOT_EDIT_SIGNS (needs an image), detection of future dates 
 8. IF every amount in Alert_Text is part of a Balance_Line, THEN THE Alert_Parser SHALL set `amount_kobo` to None.
 9. IF an amount has more than 2 decimal digits, THEN THE Alert_Parser SHALL set `amount_kobo` to None for that amount and include `AMOUNT_FORMAT_ODD` in `red_flags`.
 10. FOR ALL integer kobo values from 1 to 10,000,000,000,000 written in any Supported_Amount_Format that can represent the value exactly, parsing the written alert SHALL produce an `amount_kobo` equal to the original integer (round-trip property).
+11. THE Alert_Parser SHALL exclude every Account_Token from the amount candidates, so that no digit of an Account_Token sets `amount_kobo` or `currency` or causes `AMOUNT_FORMAT_ODD`.
+12. WHEN Alert_Text is `Acct:012****789 CR Amt: NGN 45,000.00` and the sender_id is `GTBank`, THE Alert_Parser SHALL set `amount_kobo` to 4500000 and `currency` to `NGN`.
+13. WHEN a number follows an Amount_Label, THE Alert_Parser SHALL treat that number as an amount, with `currency` set to `NGN` only when a Currency_Marker sits between the label and the number.
+14. WHEN Alert_Text contains a Preferred_Amount outside every Balance_Line and Account_Token, THE Alert_Parser SHALL set `amount_kobo` from the first such Preferred_Amount, even when a number followed by `CR` appears earlier in Alert_Text.
+15. WHEN Alert_Text contains no Preferred_Amount and contains a number followed by `CR` that is outside every Balance_Line and Account_Token, THE Alert_Parser SHALL set `amount_kobo` from the first such number, so that `50,000.00 CR` still gives 5000000.
+16. WHEN Alert_Text contains no Account_Token, THE Alert_Parser SHALL return the same `amount_kobo`, `currency` and `AMOUNT_FORMAT_ODD` result that criteria 1 to 10 give, except where criterion 13 or 14 applies.
 
 ### Requirement 3: Extract the other alert fields
 
@@ -183,6 +193,9 @@ Out of scope: SCREENSHOT_EDIT_SIGNS (needs an image), detection of future dates 
 13. IF a test fails, THEN THE test suite SHALL report the failing test by name and `pytest` SHALL exit with a non-zero exit code.
 14. THE example tests SHALL include at least three tests for `TRANSFER_REQUEST_WORDING`: an alert containing `Transfer Request Successful` has the flag in `red_flags`; a normal credit alert from a Bank_Sender_Name with a Balance_Line does not have it; and an alert with curly quotes or odd whitespace around a Transfer_Request_Phrase, such as `TRANSFER   request\tSUCCESSFUL`, still has it (Requirement 11).
 15. THE test suite SHALL contain one Hypothesis property test that places a Transfer_Request_Phrase at any position between the lines of Clean_Text and checks that `TRANSFER_REQUEST_WORDING` appears in `red_flags` exactly once and that the other entries of `red_flags` equal those of the Clean_Text without the phrase (Requirement 11).
+
+16. THE example tests SHALL include one test for the input `Acct:012****789 CR Amt: NGN 45,000.00` with sender_id `GTBank` that asserts an `amount_kobo` of 4500000 (Requirement 2.12).
+17. THE test suite SHALL contain one Hypothesis property test that places an account line (an Account_Label followed by a masked account with any digits around the asterisks) before the amount text and checks that `amount_kobo` equals the `amount_kobo` of the same text without the account line (Requirements 2.11, 2.14 and 2.15).
 
 ### Requirement 11: Detect TRANSFER_REQUEST_WORDING
 

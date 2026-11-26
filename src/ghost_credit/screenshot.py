@@ -14,9 +14,6 @@ import warnings
 from datetime import datetime
 from typing import Protocol
 
-import imagehash
-from PIL import Image
-
 from ghost_credit.parser import ParsedAlert
 
 # Largest image we will try to decode. Bigger input is refused unread.
@@ -32,6 +29,23 @@ class ScreenshotReader(Protocol):
     def read(self, image_bytes: bytes) -> ParsedAlert:
         """Read one screenshot and return what could be extracted from it."""
         ...
+
+
+def __getattr__(name: str) -> object:
+    """Load ``Image`` and ``imagehash`` on first access, not at import time.
+
+    Why: the Lambda zip holds no image libraries, but older code and tests
+    still read ``screenshot.Image`` and ``screenshot.imagehash``.
+    """
+    if name == "Image":
+        from PIL import Image
+
+        return Image
+    if name == "imagehash":
+        import imagehash
+
+        return imagehash
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def _empty_alert() -> ParsedAlert:
@@ -56,6 +70,10 @@ def _compute_phash(image_bytes: object) -> str | None:
     if len(image_bytes) == 0 or len(image_bytes) > MAX_IMAGE_BYTES:
         return None
     try:
+        # Imported here so the rest of the app loads without these libraries.
+        import imagehash
+        from PIL import Image
+
         with warnings.catch_warnings():
             # Treat a suspiciously huge image as a failure, not a warning.
             warnings.simplefilter("error", Image.DecompressionBombWarning)

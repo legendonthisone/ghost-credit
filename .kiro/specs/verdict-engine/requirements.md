@@ -87,6 +87,7 @@ Out of scope: calling Paystack, calling the pattern network, parsing alerts, scr
 9. WHEN the Verdict code is `NOT_FOUND`, THE Decide_Function SHALL include one reason stating that Paystack found no matching payment.
 10. WHEN the Verdict code is `UNVERIFIED`, THE Decide_Function SHALL include one reason stating that no Paystack check was possible and no red flags were found.
 11. THE Decide_Function SHALL leave every Risk_Note out of `reasons`.
+12. WHEN the Paystack input is Paystack_No_Match and its `reason` equals the constant `REASON_ALREADY_USED` of `src/ghost_credit/paystack.py` (`"This payment was already used for an earlier check"`), THE Decide_Function SHALL return a Verdict with code `NOT_FOUND` whose `reasons` holds that exact sentence in place of the reason in criterion 9, and SHALL keep `paystack_checked` True.
 
 ### Requirement 4: Keep the decision pure and total
 

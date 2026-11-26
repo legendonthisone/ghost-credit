@@ -98,7 +98,8 @@ def parse_sms_alert(text: str, sender_id: str | None) -> ParsedAlert: ...
 | `_find_balance_lines(text)` | Returns `list[Span]` for each `Bal`, `Avail Bal`, `Available Balance`, `Current Balance`, `Avail. Bal` label (case-insensitive) followed by an optional `:` or `-`, optional currency marker and a number. A label with no figure yields no Balance_Line (Requirement 5.4). | 5.x, 3.4 |
 | `_parse_amount_token(marker, number, k, decimals)` | Converts digit text to kobo using integer arithmetic only. | 2.1–2.3 |
 | `_find_amounts(text, masked_spans)` | Scans for marker-form and `CR`-form amounts outside masked spans. Returns candidates with a status `ok`, `odd_format`, or `too_many_decimals`. | 2.x, 6.x |
-| `_extract_amount(...)` | Picks the first candidate not in a Balance_Line. If it is `odd_format` or `too_many_decimals`, sets amount to None and records the flag. | 2.5, 2.7–2.9, 6.6 |
+| `_extract_amount(...)` | Picks the first Preferred_Amount (marker or label form) outside the masked spans, or the first CR-form candidate when there is none. If it is `odd_format` or `too_many_decimals`, sets amount to None and records the flag. | 2.5, 2.7–2.9, 2.13–2.15, 6.6 |
+| `_find_account_tokens(text)` | New. Returns the Account_Token spans (masked account, digits next to `*`, Account_Label plus its value). | 2.11, 2.12 |
 | `_amount_words_kobo(text)` | Parses a small English-words grammar (units, teens, tens, hundred, thousand, million) followed by `naira`, with optional `kobo`. Returns kobo or None. | 6.4 |
 | `_extract_account(text)` | `\b\d{3,4}\*{1,6}\d{3,4}\b`, returned as written. | 3.1 |
 | `_extract_narration(text)` | Label (`Narration`, `Description`, `Desc`, `Remarks`) then `:` or whitespace, then text to end of line, stripped and cut to 200 characters. | 3.2 |
@@ -115,7 +116,17 @@ def parse_sms_alert(text: str, sender_id: str | None) -> ParsedAlert: ...
 
 - Marker form: `(?<![A-Za-z])(?:NGN|₦|N)\s?<number>`. The lookbehind stops `N` inside words such as `BANK 500`.
 - CR form: `<number>\s?CR\b` (case-insensitive), with no currency marker, so `currency` stays None (Requirement 2.6).
-- A number with no marker and no `CR` is not an amount, except inside a Balance_Line.
+- Label form: a number directly after `Amt` or `Amount` (optional colon), with no marker, is an amount with `currency` None.
+- A number with no marker, no `CR` and no `Amt`/`Amount` label is not an amount, except inside a Balance_Line.
+- Account_Tokens are never amounts (see Account-span masking below).
+
+**Account-span masking (amount fix).** Bug: for `Acct:012****789 CR Amt: NGN 45,000.00`, `_CR_AMOUNT_RE` matches `789 CR` because the character before `789` is `*`, and the position sort puts it before `NGN 45,000.00`, so `amount_kobo` is 78900. The fix reuses the span approach that `_parse_body` already uses for dates, where account and reference spans go into `date_masks`.
+
+- A new helper `_find_account_tokens(text) -> list[Span]` returns the Account_Token spans: (1) every `_ACCOUNT_RE` match; (2) every digit run directly adjacent to `*`, with its asterisks, using `\d*\*+\d*` (this covers masked forms that `_ACCOUNT_RE` rejects, such as `1****2`); (3) an Account_Label (`(?<![A-Za-z])(?:acct|a/c|account)(?![A-Za-z])\s*:?\s*`, case-insensitive) together with the digit and asterisk run after it, `[\d*]+`. The patterns have no nested quantifiers.
+- `_parse_body` calls `_find_account_tokens` and passes the Balance_Line spans plus the Account_Token spans to `_extract_amount` as one `masked_spans` list. The parameter is renamed from `balance_spans` to `masked_spans`. `_find_amounts` already skips any candidate that overlaps `masked_spans`, so no other change to it is needed for masking.
+- A new `_AMOUNT_LABEL_RE` (`(?<![A-Za-z])(?:amt|amount)(?![A-Za-z])\s*:?\s*(?P<tok>\d[\d.,]*)(?P<k>[kK](?![A-Za-z]))?`, case-insensitive) finds a labelled number with no Currency_Marker. When a marker sits between label and number (`Amt: NGN 45,000.00`), the existing `_MARKER_AMOUNT_RE` finds it, and the label pattern does not match because a letter follows the label. A labelled match that overlaps a marker candidate is dropped. A labelled number has `has_marker` False, so `currency` stays None.
+- Ranking in `_extract_amount`: candidates from the marker pattern and the label pattern are Preferred_Amounts. The first Preferred_Amount by text position decides `amount_kobo`. The CR form decides only when there is no Preferred_Amount. This is a change from the old rule of "first candidate of any kind", and it only matters when a CR-form number appears before a marker or labelled amount. The `any_odd` flag still looks at every non-masked candidate.
+- The masked account is still returned unchanged in `account_masked` and is still used as a date mask. Masking for amounts changes only the amount path.
 
 **Odd amount checks** (applied to each digit-bearing amount token after the marker or before `CR`):
 
@@ -242,6 +253,12 @@ Reflection on redundancy: the prework found about 30 testable criteria. Totality
 
 **Validates: Requirements 11.1, 11.3, 11.7, 11.9, 10.15**
 
+### Property 10: Account line never changes the amount
+
+*For any* Account_Label (`Acct`, `A/C` or `Account`, in any letter case, with an optional colon), *for any* masked account made of digits around 1 to 6 asterisks, and *for any* alert text with a Supported_Amount_Format amount, placing the account line before the amount text gives the same `amount_kobo` as the same text without the account line.
+
+**Validates: Requirements 2.11, 2.14, 2.15, 10.17**
+
 ## Error Handling
 
 The function has no error return. Every failure mode maps to a defined output:
@@ -296,6 +313,14 @@ Synthetic alerts use invented banks' common sender names and masked accounts lik
 
 **No automated test.** Bank matching (3.6) and the 10,000-character timing limit (9.6) have no automated test and are verified by manual review.
 
+**Amount fix tests (Requirements 2.11 to 2.16, 10.16, 10.17):**
+
+| Test | Property | Generator |
+|---|---|---|
+| `test_account_line_does_not_change_amount` | 10 | An Account_Label from `Acct`, `A/C`, `Account` in random letter case with an optional colon, a masked account built from 0 to 6 digits, 1 to 6 asterisks and 0 to 6 digits, and an amount line built from a random kobo value in a Supported_Amount_Format (marker form, label form or CR form, with or without a following Balance_Line). The account line goes before the amount line, on its own line. Assert `amount_kobo` equals that of the amount text alone. |
+
+Example test: `parse_sms_alert("Acct:012****789 CR Amt: NGN 45,000.00", "GTBank")` gives `amount_kobo == 4500000`.
+
 **Other checks (not pytest tests):**
 
 - Requirement 9.1 and 9.2 (no network, files or AI): a code review item. `parser.py` imports only `re`, `dataclasses`, `datetime` and `calendar`.
@@ -316,3 +341,5 @@ Synthetic alerts use invented banks' common sender names and masked accounts lik
 8. Eight Hypothesis property tests, then a full `pytest` run.
 
 Addition after the original build (outside the 8-task limit): task 9 adds the `TRANSFER_REQUEST_WORDING` detector, its three example tests, Property 9 and a final full run.
+
+Second addition: task 10 adds the amount fix (Account_Token masking and Preferred_Amount ranking), its example test, Property 10 and a final full run.

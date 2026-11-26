@@ -135,6 +135,39 @@ Decisions:
 - A 400 or 404 from the verify endpoint gives `NOT_FOUND` with `checked` True only when `_is_reference_not_found` is true. A 400 or 404 with unreadable JSON, a non-object body, a `status` that is not exactly false, or a different message stays `UNAVAILABLE`. On the search path every non-200 gives `UNAVAILABLE`.
 - `bool` is rejected as an amount everywhere, because `True == 1` in Python.
 
+## Already-used payments (addition, Requirement 10)
+
+One real Paystack payment must not pay for two checks. `verify` stays free of hidden state, so the caller passes in a ledger lookup.
+
+Signature, with the new keyword-only parameter last:
+
+```python
+REASON_ALREADY_USED = "This payment was already used for an earlier check"   # 50 characters
+
+def verify(parsed: ParsedAlert, secret_key: str | None, now: datetime,
+           *, http: HttpFunction | None = None,
+           is_used: Callable[[str], bool] | None = None) -> PaystackResult: ...
+```
+
+Rule, applied after a Candidate_Match and before `_confirmed` is returned:
+
+| `is_used` | Match_Reference | Result |
+|---|---|---|
+| None | any | Unchanged `CONFIRMED` |
+| given | not a string (search path, `reference` missing or not text) | Unchanged `CONFIRMED`, `is_used` not called |
+| given, returns exactly `True` | a string | `NOT_FOUND`, `checked` True, `matched_reference` set to the reference, `amount_kobo` None, `paid_at` None, reason `REASON_ALREADY_USED` |
+| given, returns exactly `False` | a string | Unchanged `CONFIRMED` |
+| given, raises, or returns anything else | a string | `UNAVAILABLE`, `checked` False, reason `could not check Paystack` (`REASON_INTERNAL`) |
+
+Design decisions:
+- **Safe choice on a ledger error.** If the ledger cannot answer, the payment could already have been used. Returning `CONFIRMED` would let a replayed payment through, so the result is `UNAVAILABLE`. The verdict engine maps that to "no Paystack check", so the owner gets a cautious answer and the reminder to check the bank app. A caller that wants no ledger passes `is_used=None`, which is the only way to get the old `CONFIRMED` without asking a ledger.
+- **Strict bool.** Only an exact `True` or `False` counts. A truthy or falsy junk value is treated as "cannot check".
+- **One helper.** A small `_apply_used_rule(result, is_used)` takes the `CONFIRMED` result, asks `is_used(result.matched_reference)` inside its own try/except and returns the final result. Both `_decide_by_reference` and `_decide_by_search` pass their `CONFIRMED` through it. Nothing else changes in those functions.
+- **Called only for a would-be CONFIRMED.** Other outcomes never reach the helper, so the ledger is asked at most once and never for a payment that is not a match.
+- **Search path with no string reference.** A single match whose `reference` is not text cannot be checked against the ledger. The result stays `CONFIRMED`, as in Requirement 5.7. This is a known gap, listed in the Error Handling table.
+- **Exceptions to earlier invariants.** The already-used result is `NOT_FOUND` with `matched_reference` set. This is the one exception to Requirement 1.6 and to the data-model invariant that `matched_reference` is None unless the status is `CONFIRMED`. Properties 1 and 13 remain true because their tests do not pass `is_used`, or pass it as None. The reason table gains one fixed string, `REASON_ALREADY_USED`, so Property 14 includes it in the set of allowed reasons.
+- **The module stores nothing.** The ledger itself (`mark_used`) lives in the pipeline spec. A used reference is recorded only after a `CONFIRMED` verdict, so `paystack.py` never writes.
+
 ## Correctness Properties
 
 *A property is a characteristic or behavior that should hold true across all valid executions of a system-essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
@@ -231,6 +264,18 @@ Reflection: the key-handling criteria 2.1 and 2.2 merge into one property. The r
 
 **Validates: Requirements 6.2, 6.7**
 
+### Property 16: A used or unverifiable reference is never confirmed
+
+*For any* Test_Key, int amount and fake response that gives a Candidate_Match on either path with a string Match_Reference, and *for any* Is_Used_Function that returns True, raises, or returns a value that is not a bool, `verify` returns a status other than `CONFIRMED`. When the function returns True the result is `NOT_FOUND` with `checked` True, `matched_reference` equal to the Match_Reference and the reason `REASON_ALREADY_USED`. Otherwise the result is `UNAVAILABLE` with `checked` False and the reason `could not check Paystack`.
+
+**Validates: Requirements 10.3, 10.6, 10.9, 10.10, 10.12**
+
+### Property 17: An unused reference or no ledger changes nothing
+
+*For any* Test_Key, int amount and fake response, `verify` called with `is_used` None, or with an Is_Used_Function that returns False, returns a PaystackResult equal to the one returned by `verify` called without the `is_used` parameter, and the Is_Used_Function is called at most once with only the Match_Reference.
+
+**Validates: Requirements 10.2, 10.4, 10.5, 10.7, 10.8**
+
 ## Error Handling
 
 | Situation | Result |
@@ -246,6 +291,9 @@ Reflection: the key-handling criteria 2.1 and 2.2 merge into one property. The r
 | Http_Function returns the wrong shape (not a `(int, bytes)` pair) | `UNAVAILABLE`, `could not reach Paystack`, unchecked |
 | `parsed` or `now` of the wrong type | Caught by the outer guard. `UNAVAILABLE`, unchecked |
 | Any unexpected exception | `UNAVAILABLE`, `could not check Paystack` |
+| `is_used` returns True for the Match_Reference | `NOT_FOUND`, checked, `matched_reference` set, reason `This payment was already used for an earlier check` |
+| `is_used` raises, or returns a value that is not exactly True or False | `UNAVAILABLE`, unchecked, `could not check Paystack` |
+| Search path with a single match whose `reference` is not a string, and `is_used` given | `CONFIRMED` as before, `is_used` not called (known gap: nothing to look up) |
 
 No exception text is ever put in a reason, since exception messages could hold the URL or key. The module logs nothing. No retry is made.
 

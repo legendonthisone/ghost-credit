@@ -191,6 +191,7 @@ No AI model, client or call is added anywhere in this plan. All tests use synthe
 
 ## Notes
 
+- Requirement 3.12 (the already-used reason) is an addition. Its code and test tasks are 9.4 and 9.5 in `.kiro/specs/paystack-verifier/tasks.md`, because they depend on `paystack.py` task 9.1.
 - Tasks marked with `*` are optional test sub-tasks and can be skipped for a faster MVP; this plan includes all of them.
 - Each property has its own test file and its own task, tagged with its property number and the requirements it checks.
 - Only `verdict.py` is edited by tasks 1.1, 2.1, 3.1, 4.1, 5.1 and 6.1, and they sit in separate waves.
