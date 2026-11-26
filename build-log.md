@@ -103,6 +103,11 @@ Kiro features used today
 - Specs: two new specs (ai-explainer, whatsapp-webhook) and additions to the alert-parser, paystack-verifier, verdict-engine and check-pipeline specs. Ran every task, including the optional test tasks.
 - Property-based tests with Hypothesis for every change.
 
+Added later (26 Nov)
+- WhatsApp went live on 26 Nov: the Lambda is deployed, the app is published, and it uses a permanent system-user token. The first real GHOST reply arrived at 15:56.
+- Added PRIVACY.md in the repo root.
+- Tightened the Bedrock instruction: two short sentences to the shop owner (the reason, then what to do now), never "we", and never a claim that anyone is investigating or will follow up. The guard now rejects "looking into" and "investigat".
+- The GHOST headline for an already-used payment now reads "GHOST. Hold the goods. This payment was already used." instead of saying there is no matching payment.
 Credits used today
 - 
 

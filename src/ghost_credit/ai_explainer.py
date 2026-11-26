@@ -41,7 +41,10 @@ MAX_ITEM_CHARS = 160
 
 SYSTEM_INSTRUCTION = (
     "You reword the points below for a shop owner reading on WhatsApp. "
-    "Use plain, friendly English. Write at most 3 short sentences. "
+    "Use plain, friendly English. Speak directly to the shop owner as 'you'. "
+    "Write exactly 2 short sentences: first the reason, then what to do now. "
+    "Never say 'we'. Never say anyone is investigating or looking into it. "
+    "Never promise a follow-up or a later update. "
     "Talk about the alert, never about the customer, and do not accuse anyone. "
     "Do not say a screenshot or text message proves money is real. "
     "Do not give legal advice. "
@@ -191,6 +194,8 @@ _ACCUSATION_WORDS = tuple(
         "police",
     )
 )
+_BANNED_SUBSTRINGS = ("looking into", "investigat")
+_BANNED_WORDS = tuple(_word_regex(p) for p in ("we", "we're", "we’re", "we'll", "we’ll", "our team"))
 _LABEL_REGEX = {code: _word_regex(label) for code, label in OWNER_LABELS.items()}
 
 
@@ -225,6 +230,11 @@ def _cut_text(text: str) -> str:
 def _contradicts(text: str, code: object) -> bool:
     """True when the text claims something the verdict code does not support."""
     key = code if code in _FOUR_CODES else UNVERIFIED
+    lowered = text.lower()
+    if any(s in lowered for s in _BANNED_SUBSTRINGS):
+        return True
+    if any(p.search(text) for p in _BANNED_WORDS):
+        return True
     if key == CONFIRMED:
         if any(p.search(text) for p in _NEGATIVE_WORDS):
             return True

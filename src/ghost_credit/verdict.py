@@ -334,6 +334,7 @@ _HEADLINES = {
         "Nothing here proves this alert either way."
     ),
 }
+_ALREADY_USED_HEADLINE = "GHOST. Hold the goods. This payment was already used."
 _MAX_TEMPLATE_REASONS = 3
 
 
@@ -347,6 +348,8 @@ class TemplateExplainer(Explainer):
         code = getattr(verdict, "code", None)
         headline = _HEADLINES.get(code, _HEADLINES[UNVERIFIED])
         reasons = [r for r in (getattr(verdict, "reasons", None) or []) if isinstance(r, str)]
+        if code == NOT_FOUND and REASON_ALREADY_USED in reasons:
+            headline = _ALREADY_USED_HEADLINE
         items = reasons[:_MAX_TEMPLATE_REASONS] + [
             n for n in risk_notes if isinstance(n, str)
         ]

@@ -39,7 +39,7 @@ def test_non_string_and_non_list_inputs_give_nothing() -> None:
 
 def test_instruction_has_rules_and_no_sensitive_words() -> None:
     text = ae.SYSTEM_INSTRUCTION.lower()
-    assert "3 short sentences" in text
+    assert "2 short sentences" in text
     assert "accuse" in text
     assert "proves money is real" in text
     assert "legal advice" in text
