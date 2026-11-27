@@ -36,6 +36,7 @@ TIMEOUT_SECONDS = 30
 MEMORY_MB = 256
 ZIP_ROOT = "ghost_credit"
 CHECKS_TABLE_NAME = "ghost-credit-checks"
+USED_REFS_TABLE_NAME = "ghost-credit-used-refs"
 RESERVED_CONCURRENCY = 5
 
 WHATSAPP_NAMES = (
@@ -51,6 +52,8 @@ LAMBDA_VARIABLE_NAMES = WHATSAPP_NAMES + (
     "MERCHANT_CATEGORY",
     "PATTERN_NETWORK",
     "CHECKS_TABLE",
+    "LEDGER_HMAC_KEY",
+    "USED_REFS_TABLE",
 )
 
 # The test-key prefix is built from two pieces so the whole prefix is never one
@@ -102,6 +105,7 @@ def select_lambda_variables(values: dict[str, str]) -> dict[str, str]:
     selected.setdefault("MERCHANT_CATEGORY", "other")
     selected.setdefault("EXPLAINER", "template")
     selected.setdefault("CHECKS_TABLE", CHECKS_TABLE_NAME)
+    selected.setdefault("USED_REFS_TABLE", USED_REFS_TABLE_NAME)
     selected["PATTERN_NETWORK"] = "off"
     return selected
 
@@ -165,6 +169,15 @@ def checks_table_permissions_statement(account_id: str, region: str) -> dict:
     }
 
 
+def used_refs_permissions_statement(account_id: str, region: str) -> dict:
+    """Return the statement that lets the function read and write the used-refs table only."""
+    return {
+        "Effect": "Allow",
+        "Action": ["dynamodb:GetItem", "dynamodb:PutItem"],
+        "Resource": f"arn:aws:dynamodb:{region}:{account_id}:table/{USED_REFS_TABLE_NAME}",
+    }
+
+
 def lab_url(function_url: str) -> str:
     """Return the Function URL with ``lab`` added as one path segment."""
     return function_url.rstrip("/") + "/lab"
@@ -191,6 +204,7 @@ def permissions_policy(account_id: str) -> dict:
                 "Resource": log_group,
             },
             checks_table_permissions_statement(account_id, REGION),
+            used_refs_permissions_statement(account_id, REGION),
         ],
     }
 
@@ -205,6 +219,7 @@ def format_plan(selected_names: list[str], zip_files: int, zip_bytes: int) -> st
         f"  IAM role: {ROLE_NAME}",
         f"  Bedrock model allowed: {BEDROCK_MODEL_ARN}",
         f"  DynamoDB table: {CHECKS_TABLE_NAME} (created if missing, pay per request, TTL on expires_at)",
+        f"  DynamoDB table: {USED_REFS_TABLE_NAME} (created if missing, pay per request, TTL on expires_at)",
         f"  Reserved concurrency: {RESERVED_CONCURRENCY} (a refusal prints a warning and the deploy continues)",
         "  Function URL: created or updated at deploy time (auth NONE)",
         f"  Zip: {zip_files} files, {zip_bytes} bytes",
@@ -324,27 +339,37 @@ def _add_permission(client: object, **kwargs: object) -> None:
 
 
 def _ensure_checks_table(dynamodb: object) -> None:
-    """Create the Lab table if it is missing, then make sure TTL is on.
+    """Create the Lab table (key check_id) if missing, with TTL on expires_at."""
+    _ensure_table(dynamodb, CHECKS_TABLE_NAME, "check_id")
+
+
+def _ensure_used_refs_table(dynamodb: object) -> None:
+    """Create the used-references table (key ref_hash) if missing, with TTL."""
+    _ensure_table(dynamodb, USED_REFS_TABLE_NAME, "ref_hash")
+
+
+def _ensure_table(dynamodb: object, table_name: str, key_name: str) -> None:
+    """Create a table if it is missing, then make sure TTL is on.
 
     Why: The Lab keeps check results for 30 days. DynamoDB deletes expired
     rows itself once TTL is enabled on ``expires_at``. An existing table is
     left as it is.
     """
     try:
-        dynamodb.describe_table(TableName=CHECKS_TABLE_NAME)  # type: ignore[attr-defined]
+        dynamodb.describe_table(TableName=table_name)  # type: ignore[attr-defined]
     except Exception as exc:  # noqa: BLE001
         if _error_code(exc) != "ResourceNotFoundException":
             raise
         dynamodb.create_table(  # type: ignore[attr-defined]
-            TableName=CHECKS_TABLE_NAME,
-            AttributeDefinitions=[{"AttributeName": "check_id", "AttributeType": "S"}],
-            KeySchema=[{"AttributeName": "check_id", "KeyType": "HASH"}],
+            TableName=table_name,
+            AttributeDefinitions=[{"AttributeName": key_name, "AttributeType": "S"}],
+            KeySchema=[{"AttributeName": key_name, "KeyType": "HASH"}],
             BillingMode="PAY_PER_REQUEST",
         )
-        dynamodb.get_waiter("table_exists").wait(TableName=CHECKS_TABLE_NAME)  # type: ignore[attr-defined]
+        dynamodb.get_waiter("table_exists").wait(TableName=table_name)  # type: ignore[attr-defined]
     try:
         dynamodb.update_time_to_live(  # type: ignore[attr-defined]
-            TableName=CHECKS_TABLE_NAME,
+            TableName=table_name,
             TimeToLiveSpecification={"Enabled": True, "AttributeName": "expires_at"},
         )
     except Exception as exc:  # noqa: BLE001
@@ -379,7 +404,9 @@ def _deploy(zip_bytes: bytes, variables: dict[str, str]) -> str:
     import boto3  # imported here so the helpers work without boto3
 
     account_id = boto3.client("sts", region_name=REGION).get_caller_identity()["Account"]
-    _ensure_checks_table(boto3.client("dynamodb", region_name=REGION))
+    dynamodb = boto3.client("dynamodb", region_name=REGION)
+    _ensure_checks_table(dynamodb)
+    _ensure_used_refs_table(dynamodb)
     role_arn = _ensure_role(boto3.client("iam", region_name=REGION), account_id)
     client = boto3.client("lambda", region_name=REGION)
     if _function_exists(client):

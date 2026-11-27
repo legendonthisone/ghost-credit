@@ -20,17 +20,18 @@ def _no_aws(*args, **kwargs):
 
 
 def test_permission_policy_is_least_privilege() -> None:
-    """Only the six allowed actions, on the right resources."""
+    """Only the eight allowed actions, on the right resources."""
     policy = deploy.permissions_policy("111122223333")
     actions: list[str] = []
     for statement in policy["Statement"]:
         found = statement["Action"]
         actions += [found] if isinstance(found, str) else found
     assert sorted(actions) == [
-        "bedrock:InvokeModel", "dynamodb:PutItem", "dynamodb:Scan",
+        "bedrock:InvokeModel", "dynamodb:GetItem", "dynamodb:PutItem",
+        "dynamodb:PutItem", "dynamodb:Scan",
         "logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents",
     ]
-    bedrock, logs, dynamo = policy["Statement"]
+    bedrock, logs, dynamo, _used = policy["Statement"]
     assert dynamo["Resource"] == (
         "arn:aws:dynamodb:us-east-1:111122223333:table/ghost-credit-checks"
     )

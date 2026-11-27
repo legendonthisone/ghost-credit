@@ -135,3 +135,9 @@ Credits used today
 
 Next
 - Run the deploy, then check /lab on the phone and look at the first real checks.
+
+Added later: durable used-payment ledger
+- Used payments are now remembered in DynamoDB (table ghost-credit-used-refs), so a reused receipt is caught even after the Lambda restarts. The table holds only a keyed hash of the Paystack reference and an expiry 30 days out, never the reference itself. It is on when LEDGER_HMAC_KEY is set; otherwise the in-memory ledger is used. The Lab try form never uses it.
+- A database error never blocks a reply: a failed check falls back to today's behaviour and a failed save is only logged by error type.
+- Deploy script, PRIVACY.md and docs/deploy.md updated (both tables, new permissions, LEDGER_HMAC_KEY, reserved concurrency). Not deployed yet.
+- 578 tests passing (up from 562).

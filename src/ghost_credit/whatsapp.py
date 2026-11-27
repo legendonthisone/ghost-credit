@@ -37,6 +37,7 @@ from datetime import datetime
 from typing import Callable
 
 from ghost_credit.lab import CheckStore, get_store, record_check
+from ghost_credit.ledger import get_used_references
 from ghost_credit.pattern_network import get_network
 from ghost_credit.pipeline import LAGOS, make_paystack_verify, run_check
 from ghost_credit.screenshot import FakeScreenshotReader
@@ -342,6 +343,9 @@ def _check_text(text: str, deps: dict) -> object:
     category = _env("MERCHANT_CATEGORY") or "other"
     clock = deps["clock"] or _lagos_now
     check = deps["check"] or run_check
+    ledger = deps["used_references"]
+    if ledger is None:
+        ledger = get_used_references()
     result = check(
         text[:MAX_TEXT_CHARS],
         None,
@@ -350,12 +354,13 @@ def _check_text(text: str, deps: dict) -> object:
         clock(),
         reader=FakeScreenshotReader() if deps["reader"] is None else deps["reader"],
         paystack_verify=(
-            make_paystack_verify()
+            make_paystack_verify(is_used=ledger.is_used)
             if deps["paystack_verify"] is None
             else deps["paystack_verify"]
         ),
         network=get_network() if deps["network"] is None else deps["network"],
         explainer=_resolve_explainer(deps["explainer"]),
+        used_references=ledger,
     )
     reply = result.reply
     if not isinstance(reply, str):
@@ -425,6 +430,7 @@ def handle_webhook(
     explainer: object = None,
     seen: SeenSet | None = None,
     store: CheckStore | None = None,
+    used_references: object = None,
 ) -> WebhookResponse:
     """Answer one webhook call. It never raises.
 
@@ -436,6 +442,7 @@ def handle_webhook(
         "send": send, "clock": clock, "check": check, "reader": reader,
         "paystack_verify": paystack_verify, "network": network,
         "explainer": explainer, "seen": seen, "store": store,
+        "used_references": used_references,
     }
     authenticated = False
     try:
