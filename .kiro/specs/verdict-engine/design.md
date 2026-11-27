@@ -233,9 +233,12 @@ Headline templates, one per code. Each starts with the Owner_Label and an instru
 |---|---|---|
 | CONFIRMED | ALIVE | `ALIVE. You can release the goods. Paystack has a matching payment for this alert.` |
 | NOT_FOUND | GHOST | `GHOST. Hold the goods. Paystack has no matching payment for this alert.` |
+| NOT_FOUND, and `reasons` include `REASON_ALREADY_USED` (Requirement 6.12) | GHOST | `GHOST. Hold the goods. This payment was already used.` |
 | SUSPICIOUS | SUSPICIOUS | `SUSPICIOUS. Hold the goods. This alert has warning signs.` |
 | UNVERIFIED | UNVERIFIED | `UNVERIFIED. Check first before you release anything. Nothing here proves this alert either way.` |
 | any other code | UNVERIFIED | Same as UNVERIFIED (safe side) |
+
+The already-used headline is chosen only when the code is NOT_FOUND and the `reasons` list holds `REASON_ALREADY_USED` (imported from `ghost_credit.paystack`). It is the first line of the reply. Every other case keeps the headline in the table above, the reasons list still follows, and `build_reply` still adds the Check_Reminder (Requirement 6.12).
 
 List rules:
 
@@ -379,9 +382,9 @@ For any inputs, `risk_notes` returns a list that is a subsequence of the three f
 
 ### Property 16: TemplateExplainer text is short, plain and ordered
 
-For any Verdict returned by `decide` and any list of Risk_Note strings, the TemplateExplainer text starts with the Owner_Label for the code, has at most three sentences before the "Why:" list, lists at most the first 3 reasons, places every Risk_Note after the reasons, contains no Red_Flag_Code, and ends with the Check_Reminder when the code is not CONFIRMED.
+For any Verdict returned by `decide` and any list of Risk_Note strings, the TemplateExplainer text starts with the Owner_Label for the code, has at most three sentences before the "Why:" list, lists at most the first 3 reasons, places every Risk_Note after the reasons, contains no Red_Flag_Code, and ends with the Check_Reminder when the code is not CONFIRMED. When the code is NOT_FOUND and the reasons include `REASON_ALREADY_USED`, the first line is exactly `GHOST. Hold the goods. This payment was already used.`, and for every other Verdict the first line is the headline of its code.
 
-**Validates: Requirements 6.3, 6.4, 6.5, 6.6**
+**Validates: Requirements 6.3, 6.4, 6.5, 6.6, 6.12**
 
 ### Property 17: FakeExplainer is deterministic
 
@@ -451,6 +454,7 @@ Example tests (Requirements 8.7 to 8.9, 8.11):
 - Fallback Verdict forced by a `red_flags` object that raises on copy.
 - TemplateExplainer example for each of the four codes: Owner_Label first, at most 3 reasons, notes after reasons and before the reminder, no network or AI call.
 - A reply for each code ends as expected (reminder for three, none for CONFIRMED).
+- Already-used headline example (Requirement 6.12), in `tests/test_ai_explainer_instruction_examples.py`: a NOT_FOUND Verdict with the reason `REASON_ALREADY_USED` gives the first line `GHOST. Hold the goods. This payment was already used.`. This is an example test and not a property test, because it has one fixed input.
 
 Smoke checks:
 
@@ -484,5 +488,5 @@ Smoke checks:
 - **Ambiguous Paystack matches.** `paystack.py` returns NOT_FOUND with `checked` True when several payments of the same amount exist. The mapping then gives NOT_FOUND (GHOST), as the requirements state. The reason "Paystack found no matching payment." is slightly off for that case.
 - **Reminder from two places.** Requirement 6.5 has TemplateExplainer write the Check_Reminder and Requirement 7.1 says no Explainer carries the duty. The design satisfies both: the template writes it and Reply_Builder never doubles it.
 - **Duplicate flags.** Requirement 3.6 says one reason for each entry, so a duplicate entry in `red_flags` gives a duplicate reason. The parser never produces duplicates.
-- **GHOST headline for an already-used payment.** `TemplateExplainer` still opens a NOT_FOUND reply with "Paystack has no matching payment for this alert." Beside the reason "This payment was already used for an earlier check" this reads oddly. Changing the headline is not part of Requirement 3.12, so it is left for the owner to decide.
+- **GHOST headline for an already-used payment.** Closed. Requirement 6.12 and the headline table now give the first line `GHOST. Hold the goods. This payment was already used.` for this case.
 - **Old `tasks.md`.** `.kiro/specs/verdict-engine/tasks.md` was not touched and may still describe the old design.

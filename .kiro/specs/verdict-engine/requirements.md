@@ -141,6 +141,7 @@ Out of scope: calling Paystack, calling the pattern network, parsing alerts, scr
 9. WHEN Reply_Builder is called, THE Reply_Builder SHALL pass the Verdict, the ParsedAlert and the risk notes to the Explainer and return a reply built from the returned text.
 10. THE Reply_Builder SHALL leave the Verdict code unchanged, and THE Explainer SHALL receive no means to change the Verdict code.
 11. IF the Explainer raises an error or returns a value that is not a non-empty string, THEN THE Reply_Builder SHALL build the reply from the Verdict `reasons` joined with a single space, followed by each Risk_Note.
+12. WHEN the Verdict code is `NOT_FOUND` and the Verdict `reasons` include the sentence `REASON_ALREADY_USED` (`"This payment was already used for an earlier check"`), THE TemplateExplainer SHALL write the first line of the reply as exactly `GHOST. Hold the goods. This payment was already used.` in place of the NOT_FOUND headline that says "no matching payment", SHALL leave the headlines of all other cases unchanged, and THE Reply_Builder SHALL still end the reply with the Check_Reminder under Requirement 7, with every reason at most 120 characters under Requirement 3.
 
 ### Requirement 7: Enforce the check reminder in every reply
 

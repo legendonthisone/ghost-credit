@@ -1,0 +1,207 @@
+{
+  "pbtResults": {
+    "1.2 Write property tests for the sanitiser and InMemoryCheckStore": {
+      "status": "passed",
+      "lastRunTimestamp": 1795795561658
+    },
+    "1.4 Write property and example tests for record_check and DynamoCheckStore": {
+      "status": "passed",
+      "lastRunTimestamp": 1795795561809
+    },
+    "5.2 Write property tests for the new pure helpers": {
+      "status": "passed",
+      "lastRunTimestamp": 1795796751675
+    },
+    "5.4 Write property and example tests for the new AWS-calling helpers": {
+      "status": "passed",
+      "lastRunTimestamp": 1795796752093
+    }
+  },
+  "executionHistory": {
+    "1. Build `src/ghost_credit/lab.py`: storage, sanitiser, record builder, rate limiter": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795794949039
+      },
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796055445
+      }
+    ],
+    "1.1 Implement `CheckStore` Protocol, `InMemoryCheckStore`, constants and `sanitise_record`": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796048914
+      }
+    ],
+    "1.2 Write property tests for the sanitiser and InMemoryCheckStore": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796049118
+      }
+    ],
+    "1.3 Implement `record_check`, `DynamoCheckStore` and `get_store`": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796054179
+      }
+    ],
+    "1.4 Write property and example tests for record_check and DynamoCheckStore": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796055031
+      }
+    ],
+    "1.5 Implement the rate limiter, naira formatting, flag mapping and the HTML page template": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796055357
+      }
+    ],
+    "1.6 Write property and example tests for the limiter, formatting and page source": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796055960
+      }
+    ],
+    "2.1 Implement `route()`, `_lab_headers`, `_handle_data`, `_handle_check`, `_escape`": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796056581
+      }
+    ],
+    "2.2 Create `src/ghost_credit/lab_sample.json`": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796057895
+      }
+    ],
+    "2. Build `src/ghost_credit/lab_router.py` and `lab_sample.json`": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796058018
+      }
+    ],
+    "2.3 Write property and example tests for the router": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796058731
+      }
+    ],
+    "3. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796059161
+      }
+    ],
+    "4. Wire The Lab into `lambda_handler.py` and `whatsapp.py`": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796059466
+      },
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796776928
+      }
+    ],
+    "4.1 Add path-based routing to `lambda_handler.py`": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796776685
+      }
+    ],
+    "4.2 Add an optional `store` parameter to `handle_webhook` and call `record_check` after a WhatsApp reply": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796776871
+      }
+    ],
+    "4.3 Write example tests for the wiring": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796777384
+      }
+    ],
+    "5.1 Add the pure helpers and extend `permissions_policy`/`select_lambda_variables`": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796778011
+      }
+    ],
+    "5.2 Write property tests for the new pure helpers": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796778872
+      }
+    ],
+    "5.3 Add `_ensure_checks_table` and `_set_reserved_concurrency`, wire them into `_deploy` and `main`": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796779982
+      }
+    ],
+    "5. Update `scripts/deploy_lambda.py` for the Checks_Table and reserved concurrency": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796780112
+      }
+    ],
+    "5.4 Write property and example tests for the new AWS-calling helpers": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796780698
+      }
+    ],
+    "6.1 Add The Lab's retention statement": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796781347
+      }
+    ],
+    "6. Update `PRIVACY.md`": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796781444
+      }
+    ],
+    "6.2 Write example tests for the privacy document": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796782064
+      }
+    ],
+    "7. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "f95e1bdc-f3d7-4be2-94e1-9d73f2ceac50",
+        "chatSessionId": "sess_25f330cc-3b3a-4e2d-ac51-157057467216",
+        "timestamp": 1795796782640
+      }
+    ]
+  }
+}

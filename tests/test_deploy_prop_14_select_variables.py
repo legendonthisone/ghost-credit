@@ -23,8 +23,9 @@ def test_only_allowed_names_with_the_right_defaults(values) -> None:
     assert selected["PATTERN_NETWORK"] == "off"
     assert selected["MERCHANT_CATEGORY"] == (values.get("MERCHANT_CATEGORY") or "other")
     assert selected["EXPLAINER"] == (values.get("EXPLAINER") or "template")
+    assert selected["CHECKS_TABLE"] == (values.get("CHECKS_TABLE") or "ghost-credit-checks")
     for name in allowed:
-        if name in ("PATTERN_NETWORK", "MERCHANT_CATEGORY", "EXPLAINER"):
+        if name in ("PATTERN_NETWORK", "MERCHANT_CATEGORY", "EXPLAINER", "CHECKS_TABLE"):
             continue
         if values.get(name):
             assert selected[name] == values[name]

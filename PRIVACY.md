@@ -14,6 +14,7 @@ Ghost Credit is a fake credit alert checker built by LGND Studio Services, Lagos
 
 ## What we keep
 - We do not store your messages, phone number or alerts in a database.
+- For The Lab web page, we keep the result of each check (the verdict, the amount, the red flags and the reasons) for 30 days, then it is deleted automatically. Message text and phone numbers are never stored.
 - Message IDs are held in memory for a short time to avoid answering the same message twice, then discarded.
 - Our server logs record only step names and error types, never message text, phone numbers or keys.
 - Images you send are not downloaded or stored.

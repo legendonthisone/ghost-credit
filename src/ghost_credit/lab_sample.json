@@ -1,0 +1,84 @@
+[
+  {
+    "check_id": "sample-alive",
+    "checked_at": "2026-11-20T10:02:11+01:00",
+    "channel": "whatsapp",
+    "verdict": "CONFIRMED",
+    "owner_label": "ALIVE",
+    "amount_kobo": 4500000,
+    "claimed_bank": "GTBank",
+    "red_flags": [],
+    "reasons": ["Paystack found a matching payment."],
+    "risk_notes": [],
+    "expires_at": 1798019531
+  },
+  {
+    "check_id": "sample-ghost-none",
+    "checked_at": "2026-11-20T11:15:40+01:00",
+    "channel": "whatsapp",
+    "verdict": "NOT_FOUND",
+    "owner_label": "GHOST",
+    "amount_kobo": 1250000,
+    "claimed_bank": "Access Bank",
+    "red_flags": [],
+    "reasons": ["Paystack found no matching payment."],
+    "risk_notes": [],
+    "expires_at": 1798024540
+  },
+  {
+    "check_id": "sample-ghost-used",
+    "checked_at": "2026-11-20T12:30:05+01:00",
+    "channel": "lab",
+    "verdict": "NOT_FOUND",
+    "owner_label": "GHOST",
+    "amount_kobo": 800000,
+    "claimed_bank": "Zenith Bank",
+    "red_flags": [],
+    "reasons": ["This payment was already used for an earlier check"],
+    "risk_notes": [],
+    "expires_at": 1798029005
+  },
+  {
+    "check_id": "sample-suspicious",
+    "checked_at": "2026-11-20T15:48:22+01:00",
+    "channel": "whatsapp",
+    "verdict": "SUSPICIOUS",
+    "owner_label": "SUSPICIOUS",
+    "amount_kobo": 6000000,
+    "claimed_bank": "UBA",
+    "red_flags": ["SENDER_ID_MISMATCH", "BALANCE_LINE_MISSING", "PRESSURE_LANGUAGE"],
+    "reasons": [
+      "The message came from a phone number, not from a bank.",
+      "The alert has no available balance line, which banks normally include.",
+      "The message pushes you to release goods before you can check."
+    ],
+    "risk_notes": ["Sent late on a Friday or at the weekend, a common time for fake alerts."],
+    "expires_at": 1798039702
+  },
+  {
+    "check_id": "sample-unverified",
+    "checked_at": "2026-11-21T09:05:30+01:00",
+    "channel": "lab",
+    "verdict": "UNVERIFIED",
+    "owner_label": "UNVERIFIED",
+    "amount_kobo": 250000,
+    "claimed_bank": "First Bank",
+    "red_flags": [],
+    "reasons": ["No Paystack check was possible and no red flags were found."],
+    "risk_notes": [],
+    "expires_at": 1798099530
+  },
+  {
+    "check_id": "sample-transfer-request",
+    "checked_at": "2026-11-21T14:20:00+01:00",
+    "channel": "whatsapp",
+    "verdict": "SUSPICIOUS",
+    "owner_label": "SUSPICIOUS",
+    "amount_kobo": 15000000,
+    "claimed_bank": "Kuda",
+    "red_flags": ["TRANSFER_REQUEST_WORDING"],
+    "reasons": ["The message says a transfer was requested, not received."],
+    "risk_notes": ["Large amount. Take extra care before releasing goods."],
+    "expires_at": 1798118400
+  }
+]

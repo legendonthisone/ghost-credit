@@ -19,6 +19,7 @@ Cost note: this is the only paid call in Ghost Credit. Output is capped at 200 t
 - **Red_Flag_Code**: A parser code such as SENDER_ID_MISMATCH or DATE_ODD.
 - **Risk_Note**: A plain-English caution string from `risk_notes` in `verdict.py`.
 - **Headline**: The first line of the TemplateExplainer text for the Verdict_Code. It starts with the Owner_Label.
+- **Already_Used_Reason**: The reason text `REASON_ALREADY_USED` from `ghost_credit.paystack`, used when a matching payment was already used for an earlier sale.
 - **Prompt**: The full text sent to the model, including the fixed instruction and the reasons and Risk_Notes.
 - **Prompt_Sanitiser**: The function that chooses which reasons and Risk_Notes may go into the Prompt.
 - **Sensitive_Text**: Any of: a Verdict_Code, a Red_Flag_Code, a run of 7 or more digits, the amount in kobo as digits, or the text of any string field of the ParsedAlert (3 or more characters).
@@ -72,8 +73,9 @@ Cost note: this is the only paid call in Ghost Credit. Output is capped at 200 t
 5. THE Prompt_Sanitiser SHALL pass at most the first 3 accepted reasons and at most the first 3 accepted Risk_Notes.
 6. THE Prompt_Sanitiser SHALL cut each accepted item to at most 160 characters.
 7. IF no reason and no Risk_Note is accepted, THEN THE BedrockExplainer SHALL return the Fallback_Text without calling the model.
-8. THE fixed instruction text SHALL ask for plain English, at most 3 short sentences, no accusation of a person, no claim that a screenshot or SMS alone proves money is real, and no legal advice.
+8. THE fixed instruction text SHALL ask for plain English, exactly 2 short sentences, no accusation of a person, no claim that a screenshot or SMS alone proves money is real, and no legal advice.
 9. THE fixed instruction text SHALL tell the model not to state whether to release goods.
+10. THE fixed instruction text SHALL tell the model to speak directly to the shop owner as "you", to write the reason first and then what to do now, never to say "we", never to say that anyone is investigating or looking into the matter, and never to promise a follow-up or a later update.
 
 ### Requirement 4: Reply layout and the verdict stay under fixed code
 
@@ -87,6 +89,8 @@ Cost note: this is the only paid call in Ghost Credit. Output is capped at 200 t
 4. WHEN a reply is built through the Reply_Builder with a BedrockExplainer, THE Reply_Builder SHALL return a reply that ends with the Check_Reminder for every Verdict_Code except CONFIRMED.
 5. WHEN a reply is built through the Reply_Builder with a BedrockExplainer, THE Verdict code SHALL stay equal to its value before the call.
 6. THE BedrockExplainer SHALL NOT send the Headline, the Owner_Label or the Check_Reminder to the model.
+7. WHEN the Verdict_Code is NOT_FOUND and the reasons of the Verdict contain the Already_Used_Reason, THE TemplateExplainer SHALL use the Headline "GHOST. Hold the goods. This payment was already used."
+8. WHEN the Verdict_Code is NOT_FOUND and the reasons of the Verdict contain the Already_Used_Reason, THE BedrockExplainer SHALL return a reply that begins with the Headline "GHOST. Hold the goods. This payment was already used.", taken from the first line of the TemplateExplainer text under criterion 4.2.
 
 ### Requirement 5: Output guard
 
@@ -104,6 +108,8 @@ Cost note: this is the only paid call in Ghost Credit. Output is capped at 200 t
 8. THE Output_Guard SHALL reject text that contains a run of 7 or more digits.
 9. THE Output_Guard SHALL reject text that contains the words "fraudster", "scammer", "thief", "criminal", "lawyer", "legal action", "sue" or "police" as whole words in any letter case.
 10. IF the Output_Guard rejects the model text, THEN THE BedrockExplainer SHALL return the Fallback_Text.
+11. THE Output_Guard SHALL reject text that contains the substring "looking into" or the substring "investigat" in any letter case, including inside longer words.
+12. THE Output_Guard SHALL reject text that contains the whole word "we", "we're" or "we'll", or the whole phrase "our team", in any letter case, with either a straight or a curly apostrophe.
 
 ### Requirement 6: Fallback and silence on any failure
 

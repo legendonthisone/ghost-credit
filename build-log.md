@@ -113,3 +113,25 @@ Credits used today
 
 Next
 - Ayobami approves the cost, then run the deploy dry run and the deploy, and connect the number in Meta.
+
+## Day 5, The Lab
+
+What I did
+- Updated the ai-explainer and verdict-engine specs for the last code change (two-sentence owner instruction, the guard on "we", "looking into" and "investigat", and the new already-used GHOST headline).
+- Wrote the the-lab spec and built it on the same Lambda and Function URL. The path decides where a request goes: /lab and /lab/* go to The Lab, everything else goes to the WhatsApp webhook exactly as before.
+- Check log: after every check one anonymised record is saved to a DynamoDB table (ghost-credit-checks, on-demand, deleted after 30 days). It holds the verdict, owner label, amount in kobo, bank, red flags, reasons and risk notes. It never holds message text, phone numbers, names, account digits or references. A failed save never blocks the reply.
+- GET /lab is one self-contained page (no outside scripts) with the newest 50 checks as cards, a filter by verdict, a ghost for GHOST, and a "Sample data" toggle with six synthetic checks, each labelled Sample. The "Try an alert" form runs a pasted alert (max 2,000 characters, 20 per minute per container) and saves it with channel lab.
+- Security: every value is shown with textContent, never innerHTML, and every Lab response carries the Content-Security-Policy header. A test checks that a record containing a script tag shows as plain text. The page has no login yet, so anyone with the URL can see the anonymised checks. A gate needs Ayobami's approval.
+- Updated scripts/deploy_lambda.py: it creates the table if missing, adds only PutItem and Scan on that table to the role, prints the /lab URL, and sets reserved concurrency to 5 (a warning and carry on if AWS refuses). The deploy has not been run.
+- Updated PRIVACY.md with the 30-day retention for The Lab.
+- 562 tests passing (up from 491).
+
+Kiro features used today
+- Specs: one new spec (the-lab) and spec updates for ai-explainer and verdict-engine. Ran every task, including the optional test tasks.
+- Property-based tests with Hypothesis, including one that a saved record never holds a phone number or raw text.
+
+Credits used today
+- 
+
+Next
+- Run the deploy, then check /lab on the phone and look at the first real checks.

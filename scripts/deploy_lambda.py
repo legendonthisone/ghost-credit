@@ -35,6 +35,8 @@ RUNTIME = "python3.12"
 TIMEOUT_SECONDS = 30
 MEMORY_MB = 256
 ZIP_ROOT = "ghost_credit"
+CHECKS_TABLE_NAME = "ghost-credit-checks"
+RESERVED_CONCURRENCY = 5
 
 WHATSAPP_NAMES = (
     "WHATSAPP_VERIFY_TOKEN",
@@ -48,6 +50,7 @@ LAMBDA_VARIABLE_NAMES = WHATSAPP_NAMES + (
     "EXPLAINER",
     "MERCHANT_CATEGORY",
     "PATTERN_NETWORK",
+    "CHECKS_TABLE",
 )
 
 # The test-key prefix is built from two pieces so the whole prefix is never one
@@ -88,7 +91,8 @@ def select_lambda_variables(values: dict[str, str]) -> dict[str, str]:
     """Pick only the allowed names for the Lambda.
 
     PATTERN_NETWORK is always "off". Empty values are left out. MERCHANT_CATEGORY
-    defaults to "other" and EXPLAINER to "template".
+    defaults to "other", EXPLAINER to "template" and CHECKS_TABLE to the
+    Lab's table name.
     """
     selected = {
         name: values[name]
@@ -97,6 +101,7 @@ def select_lambda_variables(values: dict[str, str]) -> dict[str, str]:
     }
     selected.setdefault("MERCHANT_CATEGORY", "other")
     selected.setdefault("EXPLAINER", "template")
+    selected.setdefault("CHECKS_TABLE", CHECKS_TABLE_NAME)
     selected["PATTERN_NETWORK"] = "off"
     return selected
 
@@ -151,8 +156,22 @@ def trust_policy() -> dict:
     }
 
 
+def checks_table_permissions_statement(account_id: str, region: str) -> dict:
+    """Return the statement that lets the function write and read the Lab table only."""
+    return {
+        "Effect": "Allow",
+        "Action": ["dynamodb:PutItem", "dynamodb:Scan"],
+        "Resource": f"arn:aws:dynamodb:{region}:{account_id}:table/{CHECKS_TABLE_NAME}",
+    }
+
+
+def lab_url(function_url: str) -> str:
+    """Return the Function URL with ``lab`` added as one path segment."""
+    return function_url.rstrip("/") + "/lab"
+
+
 def permissions_policy(account_id: str) -> dict:
-    """Return the one inline policy: one Bedrock model and this log group only."""
+    """Return the one inline policy: one Bedrock model, this log group, the Lab table."""
     log_group = f"arn:aws:logs:{REGION}:{account_id}:log-group:/aws/lambda/{FUNCTION_NAME}:*"
     return {
         "Version": "2012-10-17",
@@ -171,6 +190,7 @@ def permissions_policy(account_id: str) -> dict:
                 ],
                 "Resource": log_group,
             },
+            checks_table_permissions_statement(account_id, REGION),
         ],
     }
 
@@ -184,6 +204,8 @@ def format_plan(selected_names: list[str], zip_files: int, zip_bytes: int) -> st
         f"  Handler: {HANDLER}",
         f"  IAM role: {ROLE_NAME}",
         f"  Bedrock model allowed: {BEDROCK_MODEL_ARN}",
+        f"  DynamoDB table: {CHECKS_TABLE_NAME} (created if missing, pay per request, TTL on expires_at)",
+        f"  Reserved concurrency: {RESERVED_CONCURRENCY} (a refusal prints a warning and the deploy continues)",
         "  Function URL: created or updated at deploy time (auth NONE)",
         f"  Zip: {zip_files} files, {zip_bytes} bytes",
         "  Environment variable names: " + (", ".join(sorted(selected_names)) or "(none)"),
@@ -301,11 +323,63 @@ def _add_permission(client: object, **kwargs: object) -> None:
             raise
 
 
+def _ensure_checks_table(dynamodb: object) -> None:
+    """Create the Lab table if it is missing, then make sure TTL is on.
+
+    Why: The Lab keeps check results for 30 days. DynamoDB deletes expired
+    rows itself once TTL is enabled on ``expires_at``. An existing table is
+    left as it is.
+    """
+    try:
+        dynamodb.describe_table(TableName=CHECKS_TABLE_NAME)  # type: ignore[attr-defined]
+    except Exception as exc:  # noqa: BLE001
+        if _error_code(exc) != "ResourceNotFoundException":
+            raise
+        dynamodb.create_table(  # type: ignore[attr-defined]
+            TableName=CHECKS_TABLE_NAME,
+            AttributeDefinitions=[{"AttributeName": "check_id", "AttributeType": "S"}],
+            KeySchema=[{"AttributeName": "check_id", "KeyType": "HASH"}],
+            BillingMode="PAY_PER_REQUEST",
+        )
+        dynamodb.get_waiter("table_exists").wait(TableName=CHECKS_TABLE_NAME)  # type: ignore[attr-defined]
+    try:
+        dynamodb.update_time_to_live(  # type: ignore[attr-defined]
+            TableName=CHECKS_TABLE_NAME,
+            TimeToLiveSpecification={"Enabled": True, "AttributeName": "expires_at"},
+        )
+    except Exception as exc:  # noqa: BLE001
+        if _error_code(exc) != "ValidationException":  # already enabled
+            raise
+
+
+def _set_reserved_concurrency(client: object) -> bool:
+    """Cap the function at 5 parallel runs. A refusal only prints a warning.
+
+    Why: new AWS accounts often cannot reserve concurrency. The deploy must
+    carry on, but the owner needs to know the cap is not in place.
+    """
+    try:
+        client.put_function_concurrency(  # type: ignore[attr-defined]
+            FunctionName=FUNCTION_NAME,
+            ReservedConcurrentExecutions=RESERVED_CONCURRENCY,
+        )
+        return True
+    except Exception as exc:  # noqa: BLE001 - any failure must not stop the deploy
+        code = _error_code(exc)
+        print(
+            f"WARNING: reserved concurrency {RESERVED_CONCURRENCY} was NOT set "
+            f"({type(exc).__name__} {code}".rstrip() + "). "
+            "The deploy continues without that cap."
+        )
+        return False
+
+
 def _deploy(zip_bytes: bytes, variables: dict[str, str]) -> str:
     """Create or update every AWS resource. Return the Function URL."""
     import boto3  # imported here so the helpers work without boto3
 
     account_id = boto3.client("sts", region_name=REGION).get_caller_identity()["Account"]
+    _ensure_checks_table(boto3.client("dynamodb", region_name=REGION))
     role_arn = _ensure_role(boto3.client("iam", region_name=REGION), account_id)
     client = boto3.client("lambda", region_name=REGION)
     if _function_exists(client):
@@ -313,6 +387,7 @@ def _deploy(zip_bytes: bytes, variables: dict[str, str]) -> str:
     else:
         _create_function(client, role_arn, zip_bytes, variables)
         client.get_waiter("function_active_v2").wait(FunctionName=FUNCTION_NAME)
+    _set_reserved_concurrency(client)
     url = _ensure_function_url(client)
     _add_permission(
         client, StatementId=_PERMISSION_URL_ID,
@@ -374,6 +449,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Deployed function: {FUNCTION_NAME}")
     print("Variables set: " + ", ".join(sorted(variables)))
     print(f"Function URL: {url}")
+    print(f"Lab URL: {lab_url(url)}")
     return 0
 
 

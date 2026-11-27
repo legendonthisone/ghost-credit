@@ -36,6 +36,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable
 
+from ghost_credit.lab import CheckStore, get_store, record_check
 from ghost_credit.pattern_network import get_network
 from ghost_credit.pipeline import LAGOS, make_paystack_verify, run_check
 from ghost_credit.screenshot import FakeScreenshotReader
@@ -336,8 +337,8 @@ def _resolve_explainer(explainer: object) -> object:
         return TemplateExplainer()
 
 
-def _reply_for_text(text: str, deps: dict) -> str:
-    """Run the check on the text and return the reply it wrote."""
+def _check_text(text: str, deps: dict) -> object:
+    """Run the check on the text and return the whole result."""
     category = _env("MERCHANT_CATEGORY") or "other"
     clock = deps["clock"] or _lagos_now
     check = deps["check"] or run_check
@@ -359,17 +360,32 @@ def _reply_for_text(text: str, deps: dict) -> str:
     reply = result.reply
     if not isinstance(reply, str):
         raise TypeError("reply is not text")
-    return reply[:MAX_REPLY_CHARS]
+    return result
+
+
+def _log_check(result: object, deps: dict) -> None:
+    """Save one anonymised record of a finished WhatsApp check.
+
+    Why: The Lab shows these. record_check never raises, so a failed save
+    cannot change the reply that was already sent.
+    """
+    store = deps["store"] if deps["store"] is not None else get_store()
+    clock = deps["clock"] or _lagos_now
+    record_check(store, result, "whatsapp", clock())  # type: ignore[arg-type]
 
 
 def _process_message(message: IncomingMessage, deps: dict) -> None:
     """Check or answer one message. Any failure is logged and dropped."""
     try:
+        result = None
         if message.kind == "text":
-            reply = _reply_for_text(message.text or "", deps)
+            result = _check_text(message.text or "", deps)
+            reply = result.reply[:MAX_REPLY_CHARS]  # type: ignore[attr-defined]
         else:
             reply = ASK_FOR_SMS_REPLY
         _send_reply(message.sender, reply, deps["send"] or default_send)
+        if result is not None:
+            _log_check(result, deps)
     except Exception as exc:  # noqa: BLE001 - one bad message must not stop the rest
         _log_event("webhook_message_failed", type(exc).__name__)
 
@@ -408,6 +424,7 @@ def handle_webhook(
     network: object = None,
     explainer: object = None,
     seen: SeenSet | None = None,
+    store: CheckStore | None = None,
 ) -> WebhookResponse:
     """Answer one webhook call. It never raises.
 
@@ -418,7 +435,7 @@ def handle_webhook(
     deps = {
         "send": send, "clock": clock, "check": check, "reader": reader,
         "paystack_verify": paystack_verify, "network": network,
-        "explainer": explainer, "seen": seen,
+        "explainer": explainer, "seen": seen, "store": store,
     }
     authenticated = False
     try:

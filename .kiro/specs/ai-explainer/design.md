@@ -80,7 +80,7 @@ Module constants:
 
 ### Fixed instruction (system message)
 
-One fixed string. It says, in plain words: you reword the points below for a shop owner reading on WhatsApp; use plain, friendly English; write at most 3 short sentences; talk about the alert, never about the customer; do not accuse anyone; do not say a screenshot or text message proves money is real; do not give legal advice; do not say whether to release goods; do not add facts, names or numbers; output the reworded text only. The text contains no Verdict_Code, no Red_Flag_Code and no Owner_Label (Requirement 3.3, 3.8, 3.9). The user message is the heading `Points:` followed by one `- ` line for each accepted reason and Risk_Note.
+One fixed string. It says, in plain words: you reword the points below for a shop owner reading on WhatsApp; use plain, friendly English; speak directly to the shop owner as "you"; write exactly 2 short sentences, the reason first, then what to do now; never say "we"; never say anyone is investigating or looking into it; never promise a follow-up or a later update; talk about the alert, never about the customer; do not accuse anyone; do not say a screenshot or text message proves money is real; do not give legal advice; do not say whether to release goods; do not add facts, names or numbers; output the reworded text only. The text contains no Verdict_Code, no Red_Flag_Code and no Owner_Label (Requirement 3.3, 3.8, 3.9, 3.10). The user message is the heading `Points:` followed by one `- ` line for each accepted reason and Risk_Note.
 
 ### Prompt_Sanitiser
 
@@ -129,8 +129,10 @@ Step 5 runs after the cut, so a banned word that sat in the cut-off part cannot 
 | Code is not CONFIRMED | `confirmed`, `verified`, `alive`, `payment is real`, `money is real`, `payment is genuine`, `money has arrived`, `safe to release`, `you can release`, `payment went through` |
 | Code is CONFIRMED | `ghost`, `fake`, `forged`, `suspicious` |
 | Always | Owner_Labels of the other three codes (for example `ghost` when the code is SUSPICIOUS), and `fraudster`, `scammer`, `thief`, `criminal`, `lawyer`, `legal action`, `sue`, `police` |
+| Always (substring, case-insensitive) | `looking into`, `investigat` (so "investigating" and "investigation" are caught) |
+| Always (whole word, case-insensitive) | `we`, `we're`, `we'll`, `our team`, with a straight or a curly apostrophe |
 
-"unverified" does not match `verified` because of the `(?<!\w)` check. An unknown code is treated as UNVERIFIED for this table, the safe side.
+The substring rows use plain `in` checks on the lower-cased text. The `we` row is whole-word, so "answer" and "weekend" are allowed. "unverified" does not match `verified` because of the `(?<!\w)` check. An unknown code is treated as UNVERIFIED for this table, the safe side.
 
 ### BedrockExplainer
 
@@ -150,7 +152,7 @@ class BedrockExplainer(Explainer):
 3. `client = self._client or self._make_client()`. The made client is kept on the instance for later calls.
 4. `response = client.converse(**self._request(items))`. This is the only Bedrock call, once per `explain`.
 5. `text = guard_output(self._read_text(response), code)`. None leads to a logged `GuardRejected` (or `NoUsableText` for a bad shape) and `fallback`.
-6. `headline = fallback.split("\n", 1)[0]`. Return `f"{headline}\n\n{text}"`.
+6. `headline = fallback.split("\n", 1)[0]`. Return `f"{headline}\n\n{text}"`. The headline is never built here, so for a NOT_FOUND verdict whose reasons hold the Already_Used_Reason it is automatically "GHOST. Hold the goods. This payment was already used." from `TemplateExplainer` (Requirement 4.7, 4.8).
 
 The request:
 
@@ -252,9 +254,9 @@ For any text value, `guard_output` returns None or a string that is non-empty, a
 
 ### Property 8: Contradicting text is rejected
 
-For any clean text and any banned word or phrase from the Contradiction_Check table inserted at any position in any letter case, `guard_output` returns None for a Verdict_Code the table applies to, and "unverified" inside a text never causes a rejection by itself.
+For any clean text and any banned word or phrase from the Contradiction_Check table inserted at any position in any letter case, `guard_output` returns None for a Verdict_Code the table applies to, and "unverified" inside a text never causes a rejection by itself. This also holds for any clean text with the substring "looking into" or "investigat" inserted anywhere in any letter case (including inside a longer word such as "investigation"), and for any clean text with the whole word "we", "we're", "we'll" (straight or curly apostrophe) or the phrase "our team" inserted in any letter case, for every Verdict_Code. A word that only contains "we" inside a longer word, such as "answer", never causes a rejection by itself.
 
-**Validates: Requirements 5.5, 5.6, 5.7, 5.9**
+**Validates: Requirements 5.5, 5.6, 5.7, 5.9, 5.11, 5.12**
 
 ### Property 9: The factory defaults to template
 
@@ -308,6 +310,8 @@ Property-based testing applies: the sanitiser, the guard, the factory and the fa
 - No `boto3`: with `boto3` blocked in `sys.modules`, `explain` falls back and the module still imports (Requirement 2.5, 6.1).
 - Fake `boto3` module: records `Config(read_timeout=5, connect_timeout=5, retries off)` and `region_name` (Requirement 2.3, 2.4).
 - Log check: with `caplog`, a fallback logs only the exception type name and no secret text from reasons or output (Requirement 6.7, 6.8).
-- Instruction text holds the required rules and none of the sensitive words (Requirement 3.3, 3.8, 3.9).
+- Instruction text holds the required rules and none of the sensitive words (Requirement 3.3, 3.8, 3.9, 3.10). It asks for "2 short sentences", forbids "we", and mentions investigating and follow-up (`tests/test_ai_explainer_instruction_examples.py`).
+- Guard wording: "We are looking into it.", "Someone is investigating this alert.", "The investigation will take a day.", "We'll update you soon.", "Our team will help." and "We checked it." are all rejected, and plain owner text is kept (Requirement 5.11, 5.12).
+- Already-used headline: a NOT_FOUND verdict with the Already_Used_Reason gives the first line "GHOST. Hold the goods. This payment was already used." (Requirement 4.7, 4.8).
 
 **Smoke checks:** `pyproject.toml` has `boto3` only under the `aws` extra (8.1); the module source has no key-like strings (8.3); `.env.example` has `EXPLAINER=` (8.4).

@@ -12,10 +12,17 @@ from __future__ import annotations
 import base64
 import binascii
 
+from datetime import datetime
+
+from ghost_credit import lab_router
+from ghost_credit.lab import SlidingWindowLimiter, get_store
+from ghost_credit.pipeline import LAGOS
 from ghost_credit.whatsapp import BODY_FORBIDDEN, SeenSet, handle_webhook
 
 # One set per Lambda container, so repeated deliveries in it are skipped.
 _SEEN = SeenSet()
+# One rate-limit window per container for The Lab's "try an alert" form.
+_LIMITER = SlidingWindowLimiter()
 
 
 def _forbidden() -> dict:
@@ -52,6 +59,27 @@ def _method(event: dict) -> object:
     return http.get("method") if isinstance(http, dict) else None
 
 
+def _path(event: dict) -> str:
+    """Read rawPath, or "/" when missing or not text."""
+    path = event.get("rawPath")
+    return path if isinstance(path, str) else "/"
+
+
+def _lab_response(event: dict) -> dict:
+    """Serve a /lab request through the Lab router."""
+    status, headers, body = lab_router.route(
+        _method(event) or "",
+        _path(event),
+        event.get("queryStringParameters"),
+        _lower_headers(event.get("headers")),
+        _raw_body(event),
+        now=datetime.now(LAGOS),
+        store=get_store(),
+        limiter=_LIMITER,
+    )
+    return {"statusCode": int(status), "headers": headers, "body": body}
+
+
 def _lower_headers(headers: object) -> dict:
     """Return headers with lowercase names; non-dict gives {}."""
     if not isinstance(headers, dict):
@@ -64,6 +92,8 @@ def lambda_handler(event: object, context: object) -> dict:
     try:
         if not isinstance(event, dict):
             return _forbidden()
+        if _path(event).startswith("/lab"):
+            return _lab_response(event)
         raw = _raw_body(event)
         response = handle_webhook(
             _method(event),
