@@ -30,6 +30,7 @@ ROLE_NAME = "ghost-credit-lambda"
 POLICY_NAME = "ghost-credit-lambda-policy"
 REGION = "us-east-1"
 BEDROCK_MODEL_ARN = "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-micro-v1:0"
+BEDROCK_VISION_MODEL_ARN = "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-lite-v1:0"
 HANDLER = "ghost_credit.lambda_handler.lambda_handler"
 RUNTIME = "python3.12"
 TIMEOUT_SECONDS = 30
@@ -49,6 +50,7 @@ PAYSTACK_NAME = "PAYSTACK_SECRET_KEY"
 LAMBDA_VARIABLE_NAMES = WHATSAPP_NAMES + (
     PAYSTACK_NAME,
     "EXPLAINER",
+    "SCREENSHOT_READER",
     "MERCHANT_CATEGORY",
     "PATTERN_NETWORK",
     "CHECKS_TABLE",
@@ -94,8 +96,9 @@ def select_lambda_variables(values: dict[str, str]) -> dict[str, str]:
     """Pick only the allowed names for the Lambda.
 
     PATTERN_NETWORK is always "off". Empty values are left out. MERCHANT_CATEGORY
-    defaults to "other", EXPLAINER to "template" and CHECKS_TABLE to the
-    Lab's table name.
+    defaults to "other", EXPLAINER to "template", SCREENSHOT_READER to "fake"
+    (only the exact value "vision" turns the screenshot model on) and
+    CHECKS_TABLE to the Lab's table name.
     """
     selected = {
         name: values[name]
@@ -104,6 +107,8 @@ def select_lambda_variables(values: dict[str, str]) -> dict[str, str]:
     }
     selected.setdefault("MERCHANT_CATEGORY", "other")
     selected.setdefault("EXPLAINER", "template")
+    if selected.get("SCREENSHOT_READER") not in ("vision", "fake"):
+        selected["SCREENSHOT_READER"] = "fake"
     selected.setdefault("CHECKS_TABLE", CHECKS_TABLE_NAME)
     selected.setdefault("USED_REFS_TABLE", USED_REFS_TABLE_NAME)
     selected["PATTERN_NETWORK"] = "off"
@@ -184,7 +189,7 @@ def lab_url(function_url: str) -> str:
 
 
 def permissions_policy(account_id: str) -> dict:
-    """Return the one inline policy: one Bedrock model, this log group, the Lab table."""
+    """Return the one inline policy: two Bedrock models, this log group, two tables."""
     log_group = f"arn:aws:logs:{REGION}:{account_id}:log-group:/aws/lambda/{FUNCTION_NAME}:*"
     return {
         "Version": "2012-10-17",
@@ -205,6 +210,11 @@ def permissions_policy(account_id: str) -> dict:
             },
             checks_table_permissions_statement(account_id, REGION),
             used_refs_permissions_statement(account_id, REGION),
+            {
+                "Effect": "Allow",
+                "Action": "bedrock:InvokeModel",
+                "Resource": BEDROCK_VISION_MODEL_ARN,
+            },
         ],
     }
 
@@ -218,6 +228,7 @@ def format_plan(selected_names: list[str], zip_files: int, zip_bytes: int) -> st
         f"  Handler: {HANDLER}",
         f"  IAM role: {ROLE_NAME}",
         f"  Bedrock model allowed: {BEDROCK_MODEL_ARN}",
+        f"  Bedrock model allowed (screenshots): {BEDROCK_VISION_MODEL_ARN}",
         f"  DynamoDB table: {CHECKS_TABLE_NAME} (created if missing, pay per request, TTL on expires_at)",
         f"  DynamoDB table: {USED_REFS_TABLE_NAME} (created if missing, pay per request, TTL on expires_at)",
         f"  Reserved concurrency: {RESERVED_CONCURRENCY} (a refusal prints a warning and the deploy continues)",

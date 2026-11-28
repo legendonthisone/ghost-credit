@@ -18,7 +18,7 @@ from ghost_credit.whatsapp import (
     handle_webhook,
 )
 from whatsapp_fakes import (
-    ACCESS_TOKEN, FIXED_NOW, PHONE_ID, SENDER, FakeCheck, FakeExplainer, RecordingSend,
+    ACCESS_TOKEN, FIXED_NOW, PHONE_ID, SENDER, FakeCheck, FakeExplainer, RecordingGet, RecordingSend,
     fake_env, image_message, post, sign, status_payload, text_message, to_bytes,
     wrap_messages,
 )
@@ -44,8 +44,9 @@ def test_recorded_text_payload() -> None:
     assert len(send.calls) == 1
 
 
-def test_recorded_image_payload_gets_the_ask_and_no_media_request() -> None:
-    response, check, send = _go(wrap_messages([image_message()]))
+def test_recorded_image_payload_with_failed_download_gets_the_ask() -> None:
+    get = RecordingGet(raises=RuntimeError("down"))
+    response, check, send = _go(wrap_messages([image_message()]), get=get)
     assert response.status == 200
     assert check.calls == []
     assert len(send.calls) == 1

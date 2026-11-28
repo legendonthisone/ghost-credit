@@ -137,6 +137,26 @@ class RecordingSend:
         return [json.loads(call[2]) for call in self.calls]
 
 
+class RecordingGet:
+    """A fake Get_Function for media calls. Maps url -> (status, body) or raises.
+
+    Calls are recorded as (url, headers, timeout, max_bytes). The first URL
+    that is not mapped gets 404.
+    """
+
+    def __init__(self, routes: dict | None = None, raises: Exception | None = None) -> None:
+        self.routes = routes or {}
+        self.raises = raises
+        self.calls: list[tuple[str, dict, float, int]] = []
+
+    def __call__(self, url, headers, timeout, max_bytes):
+        self.calls.append((url, headers, timeout, max_bytes))
+        if self.raises is not None:
+            raise self.raises
+        status, body = self.routes.get(url, (404, b""))
+        return status, body[: max_bytes + 1]
+
+
 class FakeCheck:
     """A fake run_check: counts calls, records arguments, can raise per text."""
 

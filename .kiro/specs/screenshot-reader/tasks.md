@@ -146,12 +146,19 @@ Implementation is in Python 3.10+, matching the design and `src/ghost_credit/par
     - Ensure all tests pass, ask the user if questions arise.
     - _Requirements: 1.4, 9.1_
 
+- [x] 9. Vision reader (28 Nov)
+  - [x] 9.1 Replace the stub with `VisionScreenshotReader` (Bedrock Converse, Nova Lite, 300 tokens, 10 s) and add `get_screenshot_reader`
+    - _Requirements: 3.1 to 3.8, 8.5_
+  - [x] 9.2 Tests with a fake client: good reply, bad JSON, failing client, oversize, wrong type, no bytes in logs
+    - _Requirements: 9.8_
+  - [x] 9.3 Property test: a screenshot alone is never better than UNVERIFIED
+    - _Requirements: 9.9_
 ## Notes
 
 - Tasks marked with `*` are optional and can be skipped for a faster MVP
 - Each task references specific requirements for traceability
 - Property tests validate universal correctness properties; unit and example tests cover specific cases
-- The Vision_Reader is a stub. No task adds a model call, a model name, a prompt or any reader settings
+- The Vision_Reader (added 28 Nov, Requirement 3) is built and tested with a fake Bedrock client. Task 9 below covers it
 - No test calls a model or the network
 
 ## Task Dependency Graph

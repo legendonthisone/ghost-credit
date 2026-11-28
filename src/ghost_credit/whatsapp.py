@@ -5,10 +5,13 @@ call is from Meta (HMAC signature), runs the existing ``run_check`` pipeline on
 the SMS text and sends the plain-English reply back with one outbound call.
 
 Rules this module keeps:
-- Standard library only. The outbound call uses ``urllib.request`` and can be
-  replaced by an injected ``send`` function in tests.
-- Text only. Images and other media are never downloaded or read. The owner is
-  asked to paste the SMS text instead.
+- Standard library only. The outbound calls use ``urllib.request`` and can be
+  replaced by injected ``send`` and ``get`` functions in tests.
+- Text messages are checked as before. For an image message the photo is
+  fetched from WhatsApp (media URL first, then the download), held in memory
+  only, and read by the screenshot reader. It is never written to disk and
+  never logged. If the download or the reading fails, the owner is asked to
+  paste the SMS text instead. Other media types always get that ask.
 - A WhatsApp number is not an SMS sender id, so ``sender_id`` is always None.
 - Before the signature passes, any failure gives a fixed 403 and nothing is
   processed. After it passes, every failure still gives 200 so Meta does not
@@ -40,11 +43,14 @@ from ghost_credit.lab import CheckStore, get_store, record_check
 from ghost_credit.ledger import get_used_references
 from ghost_credit.pattern_network import get_network
 from ghost_credit.pipeline import LAGOS, make_paystack_verify, run_check
-from ghost_credit.screenshot import FakeScreenshotReader
+from ghost_credit.screenshot import MAX_VISION_IMAGE_BYTES, get_screenshot_reader
 from ghost_credit.verdict import TemplateExplainer
 
 GRAPH_API_VERSION = "v21.0"
 GRAPH_URL_TEMPLATE = "https://graph.facebook.com/{version}/{phone_number_id}/messages"
+MEDIA_URL_TEMPLATE = "https://graph.facebook.com/{version}/{media_id}"
+ALLOWED_IMAGE_TYPES = ("image/jpeg", "image/png")
+GET_TIMEOUT_SECONDS = 8.0
 MAX_BODY_BYTES = 262_144
 MAX_TEXT_CHARS = 2000
 MAX_REPLY_CHARS = 4096
@@ -66,10 +72,15 @@ _MAX_ID_CHARS = 200
 _MAX_RESPONSE_READ = 65_536
 _SENDER_RE = re.compile(r"[0-9]{1,20}")
 _PHONE_ID_RE = re.compile(r"[0-9]{1,32}")
+_MEDIA_ID_RE = re.compile(r"[A-Za-z0-9_-]{1,100}")
+_MAX_CAPTION_CHARS = 2000
 
 _log = logging.getLogger("ghost_credit.whatsapp")
 
 SendFunction = Callable[[str, dict, bytes, float], "tuple[int, bytes]"]
+# GetFunction(url, headers, timeout, max_bytes) -> (status, body). The body is
+# cut at max_bytes + 1 so an oversized download can be noticed and refused.
+GetFunction = Callable[[str, dict, float, int], "tuple[int, bytes]"]
 
 
 @dataclass(frozen=True)
@@ -83,12 +94,17 @@ class WebhookResponse:
 
 @dataclass(frozen=True)
 class IncomingMessage:
-    """One validated message from Meta. ``kind`` is "text" or "other"."""
+    """One validated message from Meta. ``kind`` is "text", "image" or "other".
+
+    An "image" message carries the ``media_id`` and the optional ``caption``.
+    """
 
     message_id: str | None
     sender: str
     kind: str
     text: str | None
+    media_id: str | None = None
+    caption: str | None = None
 
 
 class SeenSet:
@@ -230,6 +246,18 @@ def _clean_id(value: object) -> str | None:
     return None
 
 
+def _to_image_message(raw: dict, message_id: str | None, sender: str) -> IncomingMessage:
+    """Build an image message, or an "other" one when the media id is unusable."""
+    image = raw.get("image")
+    media_id = image.get("id") if isinstance(image, dict) else None
+    if not isinstance(media_id, str) or not _MEDIA_ID_RE.fullmatch(media_id):
+        return IncomingMessage(message_id, sender, "other", None)
+    caption = image.get("caption")  # type: ignore[union-attr]
+    if not isinstance(caption, str) or not caption.strip():
+        caption = None
+    return IncomingMessage(message_id, sender, "image", None, media_id, caption)
+
+
 def _to_message(raw: dict) -> IncomingMessage | None:
     """Turn one raw message into an IncomingMessage, or None to skip it."""
     kind = raw.get("type")
@@ -239,6 +267,8 @@ def _to_message(raw: dict) -> IncomingMessage | None:
     if not isinstance(sender, str) or not _SENDER_RE.fullmatch(sender):
         return None
     message_id = _clean_id(raw.get("id"))
+    if kind == "image":
+        return _to_image_message(raw, message_id, sender)
     if kind != "text":
         return IncomingMessage(message_id, sender, "other", None)
     text = raw.get("text")
@@ -306,6 +336,90 @@ def default_send(
         return int(exc.code), b""
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Refuse redirects, so the access token is never sent to another address."""
+
+    def redirect_request(self, *args: object, **kwargs: object) -> None:
+        """Return None, which makes urllib raise the redirect as an HTTP error."""
+        return None
+
+
+def default_get(
+    url: str, headers: dict, timeout: float, max_bytes: int
+) -> tuple[int, bytes]:
+    """GET once with urllib and read at most max_bytes + 1 bytes.
+
+    An HTTP error status is returned, not raised. Redirects are not followed.
+    """
+    request = urllib.request.Request(url, headers=headers, method="GET")
+    opener = urllib.request.build_opener(_NoRedirect)
+    try:
+        with opener.open(request, timeout=timeout) as response:  # noqa: S310
+            return int(response.status), response.read(max_bytes + 1)
+    except urllib.error.HTTPError as exc:
+        return int(exc.code), b""
+
+
+def _media_headers(token: str) -> dict[str, str]:
+    """Headers for both media calls: the access token and our User-Agent."""
+    return {
+        "Authorization": "Bearer " + token,
+        "Accept": "*/*",
+        "User-Agent": USER_AGENT,
+    }
+
+
+def _media_info(media_id: str, token: str, get: GetFunction) -> str | None:
+    """Ask WhatsApp for the media URL. Return it only for an allowed image type."""
+    url = MEDIA_URL_TEMPLATE.format(version=GRAPH_API_VERSION, media_id=media_id)
+    status, body = get(url, _media_headers(token), GET_TIMEOUT_SECONDS, _MAX_RESPONSE_READ)
+    if status != 200:
+        _log_event("media_url_failed", status)
+        return None
+    info = json.loads(body.decode("utf-8"))
+    media_url = info.get("url") if isinstance(info, dict) else None
+    mime = info.get("mime_type") if isinstance(info, dict) else None
+    if mime not in ALLOWED_IMAGE_TYPES:
+        _log_event("media_type_refused")
+        return None
+    if not isinstance(media_url, str) or not media_url.startswith("https://"):
+        _log_event("media_url_refused")
+        return None
+    return media_url
+
+
+def download_image(media_id: str, get: GetFunction | None = None) -> bytes | None:
+    """Fetch one WhatsApp image into memory. Return None on any failure.
+
+    Why: WhatsApp gives a short-lived media URL first, then the file. Both calls
+    need the access token and a User-Agent. The bytes are returned to the caller
+    only. Nothing is written to disk and only step names and error types are
+    logged.
+    """
+    token = _env("WHATSAPP_TOKEN")
+    if not token:
+        _log_event("media_skipped")
+        return None
+    fetch = default_get if get is None else get
+    try:
+        media_url = _media_info(media_id, token, fetch)
+        if media_url is None:
+            return None
+        status, data = fetch(
+            media_url, _media_headers(token), GET_TIMEOUT_SECONDS, MAX_VISION_IMAGE_BYTES
+        )
+        if status != 200 or not isinstance(data, bytes) or not data:
+            _log_event("media_download_failed", status if isinstance(status, int) else None)
+            return None
+        if len(data) > MAX_VISION_IMAGE_BYTES:
+            _log_event("media_too_large")
+            return None
+        return data
+    except Exception as exc:  # noqa: BLE001 - a failed download means ask for the SMS
+        _log_event("media_failed", type(exc).__name__)
+        return None
+
+
 def _send_reply(sender: str, reply: str, send: SendFunction) -> None:
     """Send one reply if the settings allow it. Failures are logged, not raised."""
     token = _env("WHATSAPP_TOKEN")
@@ -338,8 +452,8 @@ def _resolve_explainer(explainer: object) -> object:
         return TemplateExplainer()
 
 
-def _check_text(text: str, deps: dict) -> object:
-    """Run the check on the text and return the whole result."""
+def _check_text(text: str, deps: dict, image_bytes: bytes | None = None) -> object:
+    """Run the check on the text (and the screenshot, if any); return the result."""
     category = _env("MERCHANT_CATEGORY") or "other"
     clock = deps["clock"] or _lagos_now
     check = deps["check"] or run_check
@@ -349,10 +463,10 @@ def _check_text(text: str, deps: dict) -> object:
     result = check(
         text[:MAX_TEXT_CHARS],
         None,
-        None,
+        image_bytes,
         category,
         clock(),
-        reader=FakeScreenshotReader() if deps["reader"] is None else deps["reader"],
+        reader=get_screenshot_reader() if deps["reader"] is None else deps["reader"],
         paystack_verify=(
             make_paystack_verify(is_used=ledger.is_used)
             if deps["paystack_verify"] is None
@@ -379,15 +493,34 @@ def _log_check(result: object, deps: dict) -> None:
     record_check(store, result, "whatsapp", clock())  # type: ignore[arg-type]
 
 
+def _check_image(message: IncomingMessage, deps: dict) -> object | None:
+    """Download and check one image message. None means ask for the SMS text.
+
+    Why: the caption counts as text. With no caption, a screenshot that gives no
+    amount has nothing to check, so the owner is asked for the SMS text.
+    """
+    image = download_image(message.media_id or "", deps["get"])
+    if image is None:
+        return None
+    caption = (message.caption or "")[:_MAX_CAPTION_CHARS]
+    result = _check_text(caption, deps, image)
+    parsed = getattr(result, "parsed", None)
+    if not caption.strip() and getattr(parsed, "amount_kobo", None) is None:
+        return None
+    return result
+
+
 def _process_message(message: IncomingMessage, deps: dict) -> None:
     """Check or answer one message. Any failure is logged and dropped."""
     try:
         result = None
         if message.kind == "text":
             result = _check_text(message.text or "", deps)
+        elif message.kind == "image":
+            result = _check_image(message, deps)
+        reply = ASK_FOR_SMS_REPLY
+        if result is not None:
             reply = result.reply[:MAX_REPLY_CHARS]  # type: ignore[attr-defined]
-        else:
-            reply = ASK_FOR_SMS_REPLY
         _send_reply(message.sender, reply, deps["send"] or default_send)
         if result is not None:
             _log_check(result, deps)
@@ -422,6 +555,7 @@ def handle_webhook(
     body: object,
     *,
     send: SendFunction | None = None,
+    get: GetFunction | None = None,
     clock: Callable[[], datetime] | None = None,
     check: Callable | None = None,
     reader: object = None,
@@ -435,11 +569,11 @@ def handle_webhook(
     """Answer one webhook call. It never raises.
 
     GET answers Meta's verification. POST checks size, then the signature,
-    then runs each text message through the pipeline and replies. Before the
+    then runs each text or image message through the pipeline and replies. Before the
     signature passes any failure is 403; after it, any failure is 200.
     """
     deps = {
-        "send": send, "clock": clock, "check": check, "reader": reader,
+        "send": send, "get": get, "clock": clock, "check": check, "reader": reader,
         "paystack_verify": paystack_verify, "network": network,
         "explainer": explainer, "seen": seen, "store": store,
         "used_references": used_references,

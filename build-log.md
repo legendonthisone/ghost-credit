@@ -141,3 +141,27 @@ Added later: durable used-payment ledger
 - A database error never blocks a reply: a failed check falls back to today's behaviour and a failed save is only logged by error type.
 - Deploy script, PRIVACY.md and docs/deploy.md updated (both tables, new permissions, LEDGER_HMAC_KEY, reserved concurrency). Not deployed yet.
 - 578 tests passing (up from 562).
+## Day 6, Screenshot reader (Sat 28 Nov)
+Docs read first (fetch MCP server)
+- https://developers.facebook.com/docs/whatsapp/cloud-api/reference/media (get the media URL by ID, then download it with the token; URLs expire after 5 minutes; images are JPEG or PNG up to 5 MB)
+- https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html (request shape, inferenceConfig, bedrock:InvokeModel permission)
+- https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ImageBlock.html (image block: format png or jpeg, source bytes)
+- https://paystack.com/docs/api/transaction/#verify (GET /transaction/verify/:reference, amounts in kobo)
+What I did
+- Updated the screenshot-reader spec (new Requirement 3, vision reader design, task 9) and added a note to the whatsapp-webhook spec.
+- Built VisionScreenshotReader behind the same ScreenshotReader interface: Amazon Nova Lite (amazon.nova-lite-v1:0, us-east-1) through bedrock-runtime Converse, image bytes in the request, 300 output tokens, 10 second timeout, one attempt. The model copies amount, currency, bank, reference, date and time and available balance as strict JSON. Our code turns naira text into kobo and the existing validator checks every field. Missing means None. Any error, timeout or bad JSON gives an empty ParsedAlert, never an exception.
+- Only JPEG and PNG (checked from the bytes) up to 5 MB are accepted. Images stay in memory: no disk, S3 or DynamoDB. Logs hold the step name and error type only. Pillow's own debug logging of image bytes is switched off.
+- whatsapp.py: an image message now calls GET /{media-id}, then downloads the file with the WhatsApp token and our User-Agent (no redirects followed, so the token never leaves Meta). The bytes go to run_check through the screenshot reader and the caption counts as text. If the download or reading fails, or the screenshot gives no amount and there is no caption, the reply asks for the SMS text as before. Text messages and The Lab try form are unchanged.
+- SCREENSHOT_READER (vision or fake, default fake) picks the reader. Nothing calls the model unless it is set to vision.
+- Rule kept: a screenshot alone is never better than UNVERIFIED unless Paystack matches. A Hypothesis test runs hostile model replies through run_check and pins it.
+- deploy_lambda.py: added bedrock:InvokeModel on the Nova Lite model ARN only (its own statement) and SCREENSHOT_READER to the allowed names. The deploy has not been run.
+- PRIVACY.md, README.md, docs/deploy.md and .env.example updated.
+- 653 tests passing (up from 578). Tests use fakes only: no AWS and no Meta call.
+Kiro features used today
+- Specs: updated screenshot-reader and whatsapp-webhook.
+- MCP: the fetch server to read the WhatsApp, Bedrock and Paystack docs.
+- Property-based tests with Hypothesis for the vision path.
+Credits used today
+- 
+Next
+- Ayobami approves the Nova Lite cost, then run the deploy and set SCREENSHOT_READER=vision in .env to switch it on.

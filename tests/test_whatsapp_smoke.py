@@ -44,7 +44,7 @@ def test_graph_api_version_is_defined_once() -> None:
 
 
 def test_sender_id_is_none_in_the_check_call() -> None:
-    assert "        None,\n        None,\n        category," in TEXT
+    assert "        None,\n        image_bytes,\n        category," in TEXT
 
 
 def test_docstring_says_dedupe_is_best_effort() -> None:

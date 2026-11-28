@@ -7,7 +7,7 @@ This feature lets a shop owner check a credit alert by sending the SMS text to a
 Part A is `src/ghost_credit/whatsapp.py`, using only the Python standard library. Part B is `src/ghost_credit/lambda_handler.py`, a lazy-import change in `src/ghost_credit/screenshot.py`, `scripts/deploy_lambda.py` and `docs/deploy.md`.
 
 Decisions made in this spec:
-- **Text only.** Images and every other non-text message type are not downloaded or read. The owner is asked to paste the SMS text. No screenshot handling exists in this version.
+- **Text, plus images (28 Nov).** An image message is fetched with GET /{media-id} and then downloaded with the WhatsApp token and our User-Agent. The bytes stay in memory, go to `run_check` through the screenshot reader, and the caption is used as text. If the download or reading fails, the owner is asked to paste the SMS text. Every other non-text message type is not downloaded or read and gets the same ask.
 - **The WhatsApp number is not an SMS sender id.** `run_check` receives `sender_id=None`, so the SENDER_ID_MISMATCH rule never fires because of a WhatsApp number.
 - **Fail closed before the signature passes.** Any failure before the signature check passes returns a fixed 403 and processes nothing. After the signature passes, every failure still returns 200 so Meta does not retry forever.
 - **Dedupe is best effort.** The seen-message set lives in memory, so it only lasts as long as one process or one Lambda container. A durable store needs Ayobami's approval later. The same holds for any in-memory used-payments ledger.
@@ -120,7 +120,7 @@ Out of scope: image and screenshot handling over WhatsApp, a durable store, any 
 
 1. WHEN an Other_Message is received in a Signed_Request, THE Webhook_Handler SHALL send the Ask_For_SMS_Reply to the Sender_Number.
 2. WHEN an Other_Message is received, THE Webhook_Handler SHALL call Run_Check zero times.
-3. WHEN an Other_Message is received, THE Webhook_Handler SHALL make no request to download or read any media.
+3. WHEN an Other_Message is received, THE Webhook_Handler SHALL make no request to download or read any media. (An image message with a usable media id is not an Other_Message since 28 Nov; see the image rules in the module docstring and tests/test_whatsapp_image_*.py.)
 
 ### Requirement 6: Sending the reply
 

@@ -8,7 +8,7 @@ from hypothesis import given, settings, strategies as st
 
 from ghost_credit.whatsapp import ASK_FOR_SMS_REPLY
 from whatsapp_fakes import (
-    FakeCheck, RecordingSend, fake_env, post, senders, to_bytes, wrap_messages,
+    FakeCheck, RecordingGet, RecordingSend, fake_env, post, senders, to_bytes, wrap_messages,
 )
 
 kinds = st.one_of(
@@ -31,7 +31,7 @@ def test_non_text_gets_the_fixed_ask(sender, kind, media_part) -> None:
     body = to_bytes(wrap_messages([message]))
     check, send = FakeCheck(), RecordingSend()
     with fake_env():
-        response = post(body, check=check, send=send)
+        response = post(body, check=check, send=send, get=RecordingGet(raises=RuntimeError("down")))
     assert response.status == 200
     assert check.calls == []
     assert len(send.calls) == 1

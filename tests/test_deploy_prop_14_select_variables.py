@@ -27,10 +27,15 @@ def test_only_allowed_names_with_the_right_defaults(values) -> None:
     assert selected["USED_REFS_TABLE"] == (
         values.get("USED_REFS_TABLE") or "ghost-credit-used-refs"
     )
+    assert selected["SCREENSHOT_READER"] == (
+        values["SCREENSHOT_READER"]
+        if values.get("SCREENSHOT_READER") in ("vision", "fake")
+        else "fake"
+    )
     for name in allowed:
         if name in (
             "PATTERN_NETWORK", "MERCHANT_CATEGORY", "EXPLAINER", "CHECKS_TABLE",
-            "USED_REFS_TABLE",
+            "USED_REFS_TABLE", "SCREENSHOT_READER",
         ):
             continue
         if values.get(name):

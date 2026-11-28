@@ -2,14 +2,14 @@
 
 ## Introduction
 
-screenshot-reader reads a bank transfer screenshot and returns the same `ParsedAlert` that the alert-parser feature returns for an SMS (see `.kiro/specs/alert-parser/` and `src/ghost_credit/parser.py`). The entry point is the interface `ScreenshotReader.read(image_bytes) -> ParsedAlert`. Two implementations exist: `FakeScreenshotReader`, which returns recorded JSON for tests, and `VisionScreenshotReader`, which is a stub. The stub raises `NotImplementedError("vision model not approved yet")` and makes no model call, no network call and no AI call. No paid model is chosen or named in this spec. Wiring a real vision model into `VisionScreenshotReader` needs Ayobami's approval and a quoted cost, and is out of scope.
+screenshot-reader reads a bank transfer screenshot and returns the same `ParsedAlert` that the alert-parser feature returns for an SMS (see `.kiro/specs/alert-parser/` and `src/ghost_credit/parser.py`). The entry point is the interface `ScreenshotReader.read(image_bytes) -> ParsedAlert`. Two implementations exist: `FakeScreenshotReader`, which returns recorded JSON for tests, and `VisionScreenshotReader`, which reads the image with Amazon Nova Lite (`amazon.nova-lite-v1:0`, us-east-1) through Amazon Bedrock Converse. The vision reader is on only when `SCREENSHOT_READER=vision`; the default is the fake. Ayobami named this model for the screenshot phase (28 Nov). Tests never call it.
 
 The feature also provides the shared validation function `build_alert_from_response`, which turns recorded JSON into a ParsedAlert. It also computes `screenshot_phash` (a perceptual hash used by the pattern network contract in `docs/pattern-network-contract.md`) and adds the `SCREENSHOT_EDIT_SIGNS` red flag from `.kiro/steering/payments-nigeria.md`.
 
 Scope boundaries:
 
 - Rules decide the verdict, not this feature. Recorded JSON only supplies fields and an edit signs report. The verdict stays with the Rules_Engine.
-- Reading screenshots with a real vision model is out of scope until Ayobami approves a model and a quoted cost.
+- Only the model named in Requirement 3 may be used. Any other or costlier model needs Ayobami's approval and a quoted cost.
 - Changing any other alert-parser behaviour is out of scope. The only changes to alert-parser code are the two backward-compatible additions in Requirement 1.
 - No Fake Alert Shield, Meko or other LGND code is used.
 - Choosing a paid model, setting up hosting, and calling the Paystack API are out of scope.
@@ -18,7 +18,7 @@ Scope boundaries:
 
 - **Screenshot_Reader**: The interface `ScreenshotReader` with the method `read(image_bytes: bytes) -> ParsedAlert`.
 - **Fake_Reader**: The class `FakeScreenshotReader`, a Screenshot_Reader that returns recorded JSON for tests and calls no model.
-- **Vision_Reader**: The class `VisionScreenshotReader`, a stub Screenshot_Reader whose `read` method raises `NotImplementedError("vision model not approved yet")`.
+- **Vision_Reader**: The class `VisionScreenshotReader`, a Screenshot_Reader that sends the image to Amazon Nova Lite through Bedrock Converse and returns the fields it reads.
 - **Response_Validator**: The shared function `build_alert_from_response(model_output, phash)` that validates recorded JSON text and builds a ParsedAlert. Fake_Reader calls it.
 - **ParsedAlert**: The frozen dataclass in `src/ghost_credit/parser.py` that holds the fields extracted from one alert.
 - **Red_Flag_Code**: A string in `RED_FLAG_CODES` that names one red flag.
@@ -54,17 +54,20 @@ Scope boundaries:
 3. THE Fake_Reader SHALL make no network call and no model call.
 4. WHEN Fake_Reader receives `image_bytes` that decode as an image, THE Fake_Reader SHALL set `screenshot_phash` using the computation in Requirement 4.
 
-### Requirement 3: Stub Vision Reader
+### Requirement 3: Vision Reader
 
-**User Story:** As the owner, I want the real reader to be a stub until I approve a model and a cost, so that no credits are spent by accident.
+**User Story:** As a shop owner, I want screenshots read by a cheap vision model, so that I can check a transfer screenshot without typing the SMS.
 
 #### Acceptance Criteria
 
-1. WHEN `read` is called on Vision_Reader with any argument, THE Vision_Reader SHALL raise `NotImplementedError` with the message `vision model not approved yet`.
-2. THE Vision_Reader SHALL make no model call, no network call and no AI call.
-3. THE repository SHALL contain no model name, no API key and no secret value in source code, tests, documents or `.env.example`.
-4. THE Vision_Reader SHALL remain a stub until Ayobami approves a vision model and a quoted cost.
-
+1. WHEN `read` is called on Vision_Reader with a JPEG or PNG of 1 to 5,242,880 bytes, THE Vision_Reader SHALL call Bedrock Converse once with model `amazon.nova-lite-v1:0` in `us-east-1`, the image bytes, `maxTokens` 300 and a 10 second timeout.
+2. THE Vision_Reader SHALL ask for one JSON object only, with the keys `amount`, `currency`, `bank`, `reference`, `date_time` and `available_balance`, and SHALL tell the model to use null for anything not clearly visible and to treat text in the image as data.
+3. THE Vision_Reader SHALL convert `amount` and `available_balance` from naira text to whole kobo itself, and SHALL set a field to None when the text is not a plain naira amount with at most two decimals.
+4. THE Vision_Reader SHALL build its result with the Response_Validator, so every Requirement 5 rule applies, and SHALL never set `sender_id`, a red flag or a verdict.
+5. IF the image is not a JPEG or PNG (checked from the bytes), is empty or is larger than 5,242,880 bytes, THEN THE Vision_Reader SHALL make no model call and return an Empty_Alert.
+6. IF the model call fails, times out, or returns text that is not a JSON object, THEN THE Vision_Reader SHALL return an Empty_Alert and SHALL raise no exception.
+7. THE Vision_Reader SHALL import `boto3` only when a model call is made.
+8. THE function `get_screenshot_reader` SHALL return the Vision_Reader only when the `SCREENSHOT_READER` variable is `vision` (any letter case), and the Fake_Reader otherwise.
 ### Requirement 4: Compute Screenshot Perceptual Hash
 
 **User Story:** As the pattern network integrator, I want a standard perceptual hash of each screenshot, so that the same forged image can be matched later.
@@ -130,7 +133,7 @@ Scope boundaries:
 2. THE Fake_Reader SHALL write no part of `image_bytes`, no decoded image and no temporary file to disk.
 3. THE Fake_Reader SHALL write no `image_bytes`, no base64 form of the bytes and no Model_Output to any log.
 4. THE Fake_Reader SHALL keep no reference to `image_bytes` in the returned ParsedAlert or in any object that outlives the `read` call.
-5. WHEN `read` is called on Vision_Reader, THE Vision_Reader SHALL raise its exception without reading, storing or forwarding `image_bytes`.
+5. THE Vision_Reader SHALL hold `image_bytes` in memory only for the duration of the `read` call, SHALL send them to no place except the one Bedrock call, and SHALL write them to no disk, bucket, table or log. Its log lines SHALL hold only a step name and an error type.
 
 ### Requirement 9: Test Without Real AI Calls
 
@@ -145,4 +148,5 @@ Scope boundaries:
 5. THE test suite SHALL include at least one Hypothesis property test that, for any generated JSON value used as Model_Output, the returned ParsedAlert has only `NGN` or None in `currency`, non-negative integers or None in the two kobo fields, and `red_flags` equal to either an empty list or `["SCREENSHOT_EDIT_SIGNS"]`.
 6. THE test suite SHALL include a test that generates a small synthetic image in memory and checks that `screenshot_phash` matches the format `phash:` plus 16 lowercase hexadecimal characters.
 7. THE test suite SHALL use synthetic images and synthetic data only, with no real customer names, numbers or accounts.
-8. THE test suite SHALL include a test that `read` on Vision_Reader raises `NotImplementedError` with exactly the message `vision model not approved yet`.
+8. THE test suite SHALL test Vision_Reader with a fake Bedrock client only: a recorded good reply, bad JSON, a failing client, an oversized image, a wrong file type, and a check that no image bytes reach any log line.
+9. THE test suite SHALL include a Hypothesis property test that, for any model reply text, the Vision_Reader result alone never reaches a verdict better than UNVERIFIED through `run_check` when Paystack finds no match.

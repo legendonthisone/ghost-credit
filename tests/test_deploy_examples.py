@@ -27,16 +27,19 @@ def test_permission_policy_is_least_privilege() -> None:
         found = statement["Action"]
         actions += [found] if isinstance(found, str) else found
     assert sorted(actions) == [
-        "bedrock:InvokeModel", "dynamodb:GetItem", "dynamodb:PutItem",
+        "bedrock:InvokeModel", "bedrock:InvokeModel", "dynamodb:GetItem", "dynamodb:PutItem",
         "dynamodb:PutItem", "dynamodb:Scan",
         "logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents",
     ]
-    bedrock, logs, dynamo, _used = policy["Statement"]
+    bedrock, logs, dynamo, _used, vision = policy["Statement"]
     assert dynamo["Resource"] == (
         "arn:aws:dynamodb:us-east-1:111122223333:table/ghost-credit-checks"
     )
     assert bedrock["Resource"] == (
         "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-micro-v1:0"
+    )
+    assert vision["Resource"] == (
+        "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-lite-v1:0"
     )
     assert logs["Resource"] == (
         "arn:aws:logs:us-east-1:111122223333:log-group:/aws/lambda/ghost-credit:*"

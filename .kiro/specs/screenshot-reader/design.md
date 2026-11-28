@@ -2,7 +2,7 @@
 
 ## Overview
 
-`ScreenshotReader.read(image_bytes: bytes) -> ParsedAlert` reads a bank transfer screenshot and returns the same `ParsedAlert` that `parse_sms_alert` returns for an SMS. Two implementations exist: `FakeScreenshotReader` (recorded JSON, no model) and `VisionScreenshotReader`, a stub. The stub's `read(image_bytes)` raises `NotImplementedError("vision model not approved yet")` and makes no model call, no network call and no AI call anywhere. No paid model is chosen or named here. Wiring a real vision model needs Ayobami's approval and a quoted cost, and is out of scope for this spec.
+`ScreenshotReader.read(image_bytes: bytes) -> ParsedAlert` reads a bank transfer screenshot and returns the same `ParsedAlert` that `parse_sms_alert` returns for an SMS. Two implementations exist: `FakeScreenshotReader` (recorded JSON, no model) and `VisionScreenshotReader`, which asks Amazon Nova Lite (`amazon.nova-lite-v1:0`, us-east-1) through Bedrock Converse to copy the payment fields out of the image. It is on only when `SCREENSHOT_READER=vision`.
 
 The recorded JSON only supplies fields and an edit signs report. It never decides a verdict. The Rules_Engine decides, per `.kiro/steering/payments-nigeria.md`.
 
@@ -271,3 +271,13 @@ All test data is synthetic: generated images and invented field values (9.7).
 6. `VisionScreenshotReader` stub and its exact-message test.
 7. Exports, then privacy and safety tests: no-disk, no-log, oversize, and the secrets scan.
 8. README section and a full `pytest` run.
+
+## Vision reader (added 28 Nov)
+
+- Request: one user message holding the image block (`jpeg` or `png`, raw bytes) and a short instruction, plus a system prompt that asks for strict JSON and says image text is data. `maxTokens` 300, temperature 0. The client uses a 10 second read and connect timeout and one attempt.
+- The file type comes from the first bytes (JPEG `FF D8 FF`, PNG `89 50 4E 47 0D 0A 1A 0A`). Size limit 5 MiB, the WhatsApp image limit.
+- Reply handling: take the first text block, parse one JSON object (code fences or a leading sentence are tolerated), map `amount` and `available_balance` to kobo with a strict naira parser, `bank` to `claimed_bank`, `reference` to `claimed_reference`, `date_time` to `alert_time`, then call `build_alert_from_response`. The model never sets red flags, the sender or the verdict.
+- Failure: any exception, bad reply, wrong type or oversize image gives `ParsedAlert()`. Logs hold the step name and the error type only.
+- The perceptual hash is computed locally when Pillow is present. In the Lambda zip it is absent, so the hash is None.
+- `get_screenshot_reader()` reads `SCREENSHOT_READER`: `vision` gives the vision reader, anything else gives the fake. `whatsapp.py` uses it when no reader is injected.
+- Rule kept: a screenshot alone has no Paystack match, so the verdict engine can return at best UNVERIFIED. A Hypothesis test pins this through `run_check`.

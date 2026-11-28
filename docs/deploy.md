@@ -43,6 +43,7 @@ One Lambda function called `ghost-credit` (Python 3.12, 256 MB, 30 seconds) behi
    | `WHATSAPP_PHONE_NUMBER_ID` | The phone number id from the WhatsApp setup page. |
    | `PAYSTACK_SECRET_KEY` | The Paystack test secret key. The script refuses anything that is not a test key. |
    | `EXPLAINER` | `template` (free). Leave empty to use `template`. |
+   | `SCREENSHOT_READER` | `fake` (free, the default) or `vision`. `vision` reads screenshots with Amazon Nova Lite, which costs a small amount per image. Leave empty to use `fake`. |
    | `MERCHANT_CATEGORY` | For example `spa`. Leave empty to use `other`. |
    | `LEDGER_HMAC_KEY` | A long random value you invent (at least 32 random characters). See the notes below. |
    | `USED_REFS_TABLE` | Leave empty to use `ghost-credit-used-refs`. |
@@ -71,7 +72,7 @@ It also creates two DynamoDB tables if they are missing (pay per request, expiry
 
 The role may only do these things in `us-east-1`:
 
-- Call the `amazon.nova-micro-v1:0` model and write its own logs.
+- Call the `amazon.nova-micro-v1:0` model (reply wording) and the `amazon.nova-lite-v1:0` model (screenshot reading), and write its own logs.
 - `PutItem` and `Scan` on `ghost-credit-checks`.
 - `GetItem` and `PutItem` on `ghost-credit-used-refs`. Nothing else.
 
@@ -109,7 +110,7 @@ The Lab page is the Function URL with `/lab` added at the end. The script prints
    aws logs tail /aws/lambda/ghost-credit --since 10m --region us-east-1
    ```
 
-Images are not read yet. If you send a screenshot, the reply asks you to paste the SMS text.
+With `SCREENSHOT_READER=vision`, a screenshot you send is read in memory and checked like an SMS. With the default `fake`, or if the screenshot cannot be read, the reply asks you to paste the SMS text.
 
 ## 7. Update
 

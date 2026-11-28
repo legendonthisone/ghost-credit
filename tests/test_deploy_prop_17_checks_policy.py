@@ -18,7 +18,7 @@ account_ids = st.text(alphabet="0123456789", min_size=12, max_size=12)
 def test_policy_has_exact_dynamodb_statement(account_id) -> None:
     policy = deploy.permissions_policy(account_id)
     statements = policy["Statement"]
-    assert len(statements) == 4
+    assert len(statements) == 5
     dynamo = [s for s in statements if "dynamodb:Scan" in s["Action"]]
     assert len(dynamo) == 1
     assert dynamo[0]["Effect"] == "Allow"
